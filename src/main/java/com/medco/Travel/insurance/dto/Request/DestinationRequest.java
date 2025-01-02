@@ -15,4 +15,11 @@ public class DestinationRequest {
     private LocalDate endDate;
     private int numberOfTravelers;
 
+    private String purposeOfTravel;
+    private String travelAirline;
+    private String destinationAddress;
+    private String phoneToDestination;
+    private String coverRequiredFor;
+    private String chronicIllness;
+
 }

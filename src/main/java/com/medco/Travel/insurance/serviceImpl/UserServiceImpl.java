@@ -3,10 +3,7 @@ package com.medco.Travel.insurance.serviceImpl;
 import com.medco.Travel.insurance.dto.Request.*;
 import com.medco.Travel.insurance.dto.Response.*;
 import com.medco.Travel.insurance.entity.*;
-import com.medco.Travel.insurance.exception.BadRequestException;
-import com.medco.Travel.insurance.exception.EmailAlreadyExists;
-import com.medco.Travel.insurance.exception.InvalidCredentialsException;
-import com.medco.Travel.insurance.exception.InvalidPhoneException;
+import com.medco.Travel.insurance.exception.*;
 import com.medco.Travel.insurance.repository.*;
 import com.medco.Travel.insurance.security.jwt.JwtUtils;
 import com.medco.Travel.insurance.security.service.UserDetailsImpl;
@@ -591,15 +588,43 @@ public class UserServiceImpl implements UserService {
 
     @Override
     public UserMyResponse getUsers(int page, int limit) {
+        Pageable pageable = PageRequest.of(page - 1, limit);
 
-        return null;
+        Page<User> userPage = userRepository.findAll(pageable);
+
+        List<UserResponse> userResponses = userPage.getContent().stream()
+                .map(user -> {
+                    UserResponse userResponse = new UserResponse();
+                    BeanUtils.copyProperties(user, userResponse);
+                    return userResponse;
+                })
+                .collect(Collectors.toList());
+
+        UserMyResponse response = new UserMyResponse();
+        response.setTotalPages(userPage.getTotalPages());
+        response.setTotalElements(userPage.getTotalElements());
+        response.setPageNumber(page);
+        response.setContent(userResponses);
+
+        return response;
     }
+
 
     @Override
     public UserResponse getUserByEmail(String email) {
 
-        return null;
+        User user = userRepository.findByEmail(email);
+
+        if (user==null){
+            throw new ResourceNotFoundException("User not found with email: " + email);
+        }
+
+        UserResponse userResponse = new UserResponse();
+        BeanUtils.copyProperties(user, userResponse);
+
+        return userResponse;
     }
+
 
 
 }

@@ -24,6 +24,13 @@ public class Destination {
     private LocalDate endDate;
     private int numberOfTravelers;
 
+    private String purposeOfTravel;
+    private String travelAirline;
+    private String destinationAddress;
+    private String phoneToDestination;
+    private String coverRequiredFor;
+    private String chronicIllness;
+
     @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Policy> policies = new ArrayList<>();
 

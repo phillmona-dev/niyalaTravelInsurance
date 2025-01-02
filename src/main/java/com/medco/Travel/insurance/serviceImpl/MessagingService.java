@@ -23,16 +23,10 @@ public class MessagingService {
     @Value("${afromessage.api.identifierId}")
     private String identifierId;
 
-    @Value("${afromessage.api.senderName}")
-    private String senderName;
-
-    @Value("${afromessage.api.callbackUrl}")
-    private String callbackUrl;
-
     private final OkHttpClient client;
     private final OtpRepository otpRepository;
 
-    private static final long OTP_EXPIRY_MINUTES = 5;  // OTP validity duration in minutes
+    private static final long OTP_EXPIRY_MINUTES = 5; // OTP validity duration in minutes
 
     public MessagingService(OtpRepository otpRepository) {
         this.client = new OkHttpClient();
@@ -43,7 +37,7 @@ public class MessagingService {
      * Sends an OTP message to the specified phone number using AfroMessage API.
      *
      * @param phoneNumber the recipient's phone number
-     * @param otp         the OTP to send
+     * @throws RuntimeException if the OTP sending fails
      */
     public void sendOtp(String phoneNumber, String otp) {
         // Check if there's an existing OTP and if it's expired
@@ -55,7 +49,7 @@ public class MessagingService {
             // Check if OTP has expired
             if (otpEntity.getExpiryDate().isAfter(LocalDateTime.now())) {
                 System.out.println("OTP is still valid, not sending a new one.");
-                return;  // Skip sending a new OTP if the existing one is still valid
+                return; // Skip sending a new OTP if the existing one is still valid
             } else {
                 // If OTP expired, delete the old OTP record
                 otpRepository.delete(otpEntity);
@@ -66,49 +60,44 @@ public class MessagingService {
         // Generate a new OTP
         String newOtp = generateOtp();
 
-        // Save the new OTP with expiry time in the database
-        Otp otpEntity = new Otp();
-        otpEntity.setPhoneNumber(phoneNumber);
-        otpEntity.setOtp(newOtp);
-        otpEntity.setExpiryDate(LocalDateTime.now().plus(OTP_EXPIRY_MINUTES, ChronoUnit.MINUTES));
-        otpRepository.save(otpEntity);
 
-        // Build the URL with required parameters
-        HttpUrl.Builder urlBuilder = HttpUrl.parse(apiUrl).newBuilder();
-        urlBuilder.addQueryParameter("to", phoneNumber);
-        urlBuilder.addQueryParameter("message", "Your OTP is: " + newOtp);
-        urlBuilder.addQueryParameter("callback", callbackUrl);
-        urlBuilder.addQueryParameter("from", identifierId);
-        urlBuilder.addQueryParameter("sender", senderName);
 
-        String url = urlBuilder.build().toString();
+        // Prepare the JSON payload
+        String messageContent = "Your OTP is: " + newOtp;
+        String jsonPayload = "{"
+                + "\"from\":\"" + identifierId + "\","
+                + "\"to\":\"" + phoneNumber + "\","
+                + "\"message\":\"" + messageContent + "\""
+                + "}";
+
+        RequestBody body = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), jsonPayload);
 
         // Build the request
         Request request = new Request.Builder()
                 .header("Authorization", "Bearer " + apiToken)
-                .url(url)
+                .url(apiUrl)
+                .post(body)
                 .build();
 
-        // Dispatch the request asynchronously
-        client.newCall(request).enqueue(new Callback() {
-            @Override
-            public void onFailure(Call call, IOException e) {
-                // Handle failure (e.g., log the error or retry logic)
-                System.err.println("Error sending OTP: " + e.getMessage());
+        // Dispatch the request synchronously to handle errors properly
+        try (Response response = client.newCall(request).execute()) {
+            String responseBody = response.body().string();
+
+            if (!response.isSuccessful() || responseBody.contains("\"acknowledge\":\"error\"")) {
+                throw new RuntimeException("Error from AfroMessage API: " + responseBody);
             }
 
-            @Override
-            public void onResponse(Call call, Response response) throws IOException {
-                // Handle the response from AfroMessage API
-                if (!response.isSuccessful()) {
-                    // Handle unsuccessful response (e.g., log the error or alert)
-                    System.err.println("Failed to send OTP: " + response.body().string());
-                } else {
-                    // Process the successful response (e.g., check for acknowledgment or status)
-                    System.out.println("OTP sent successfully: " + response.body().string());
-                }
-            }
-        });
+            // Save the new OTP with expiry time in the database only after successful response
+            Otp otpEntity = new Otp();
+            otpEntity.setPhoneNumber(phoneNumber);
+            otpEntity.setOtp(newOtp);
+            otpEntity.setExpiryDate(LocalDateTime.now().plus(OTP_EXPIRY_MINUTES, ChronoUnit.MINUTES));
+            otpRepository.save(otpEntity);
+
+            System.out.println("OTP sent successfully to " + phoneNumber);
+        } catch (IOException e) {
+            throw new RuntimeException("Error sending OTP: " + e.getMessage(), e);
+        }
     }
 
     /**
@@ -117,7 +106,8 @@ public class MessagingService {
      * @return OTP as a String
      */
     private String generateOtp() {
-        return String.format("%06d", (int) (Math.random() * 1000000));
+        return String.format("%04d", (int) (Math.random() * 10000));
     }
-
 }
+
+

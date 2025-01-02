@@ -72,6 +72,7 @@ public class WebSecurityConfig {
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", config);
         return source;
+
     }
 
     @Bean
@@ -96,7 +97,8 @@ public class WebSecurityConfig {
                                         "/api/travel/policy/**",
                                         "/api/travel/payments/**",
                                         "/api/travel/premium/**",
-                                        "/api/travel/otp/**"
+                                        "/api/travel/otp/**",
+                                        "/api/travel/users/**"
 
 
                                 ).permitAll()

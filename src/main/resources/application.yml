@@ -45,14 +45,13 @@ servlet:
     resolve-lazily: true
 
 server:
-  port: 8888
+  port: 8900
 
 # MAPFRE API Configuration
 mapfre:
   api:
     key: dev-mapfre-api-key
     url: http://localhost:8080/mock-mapfre/calculate-premium
-
 
 # Telebirr API Configuration
 telebirr:
@@ -63,7 +62,7 @@ telebirr:
 afromessage:
   api:
     url: "https://api.afromessage.com/api/send"
-    token: "eyJhbGciOiJIUzI1NiJ9.eyJpZGVudGlmaWVyIjoiVzlRRkRLSGxMbVhxcjRCM3Z5bUI3MEdiVUZudjFGVHQiLCJleHAiOjE4ODc2Mjg3NDksImlhdCI6MTcyOTg2MjM0OSwianRpIjoiNTYzYWEyNWYtNzExNi00N2YzLTg3ZjctOTBiNmYxMWE0NjcwIn0.7iqjiLxmvLfkN50NlRAGTeDpa0TvGynB_X7Q93PdDnA"
-    identifierId: "e80ad9d8-adf3-463f-80f4-7c4b39f7f164"
-    senderName: MEDCO
-    callbackUrl: http://192.168.100.82:8888/api/notifications/sms-status
+    token: eyJhbGciOiJIUzI1NiJ9.eyJpZGVudGlmaWVyIjoiYkpUZ1VZVzJoaTZnaFo5QTJDSjBaU3pzeWhLZ2ZtVWsiLCJleHAiOjE4OTM0NzkxNjUsImlhdCI6MTczNTcxMjc2NSwianRpIjoiMmVlMGNmOWUtOGFlMC00NDQ0LWFjY2UtODdhNjU0MjhiNmQxIn0.D5_eQNtA4HNaNuVo1O6pydwaZ-sn3fpWZa-g4rjl1IU
+    identifierId: e80ad9d8-adf3-463f-80f4-7c4b39f7f164
+#    senderName: Yemane Alem
+#    callbackUrl: http://192.168.100.82:8888/api/notifications/sms-status

@@ -19,8 +19,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "users", uniqueConstraints = {
-        @UniqueConstraint(columnNames = "email"),
-        @UniqueConstraint(columnNames = "telephone")
+        @UniqueConstraint(columnNames = "email")
+//        @UniqueConstraint(columnNames = "telephone")
 })
 @Getter
 @Setter
@@ -74,6 +74,7 @@ public class User extends Audit {
     private String profilePicture;
     private String passwordResetCode;
     private String emailVerificationToken;
+
 }
 
 

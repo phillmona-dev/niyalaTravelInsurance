@@ -17,5 +17,14 @@ public class PassengerRequest {
 //    private int age;
     private String passportNumber;
     private String telephone;
+
+    private String email;
+    private String city;
+    private String woreda;
+    private String houseNumber;
+    private String citizenship;
+    private String fixedPhoneNumber;
+    private String postalCode;
+
     private DestinationRequest destination;
 }

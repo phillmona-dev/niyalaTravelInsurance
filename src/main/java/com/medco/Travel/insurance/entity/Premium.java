@@ -30,5 +30,7 @@ public class Premium {
 
     private double premiumAmount;
 
+    private double coverLimit;
+
 }
 

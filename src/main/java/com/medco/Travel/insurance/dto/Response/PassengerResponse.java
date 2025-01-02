@@ -20,5 +20,16 @@ public class PassengerResponse {
     private int age;
     private String passportNumber;
     private String telephone;
+
+    private String email;
+    private String city;
+    private String woreda;
+    private String citizenship;
+
+    private String fixedPhoneNumber;
+    private String houseNumber;
+
+    private String postalCode;
+
     private Destination destination;
 }

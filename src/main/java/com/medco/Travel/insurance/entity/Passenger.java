@@ -25,6 +25,14 @@ public class Passenger {
     private String passportNumber;
     private String telephone;
 
+    private String email;
+    private String city;
+    private String woreda;
+    private String houseNumber;
+    private String citizenship;
+    private String fixedPhoneNumber;
+    private String postalCode;
+
     @ManyToOne
     @JoinColumn(name = "policy_id")
     private Policy policy;

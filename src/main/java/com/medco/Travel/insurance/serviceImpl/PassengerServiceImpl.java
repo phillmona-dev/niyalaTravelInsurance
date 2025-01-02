@@ -44,7 +44,16 @@ public class PassengerServiceImpl implements PassengerService {
                         newDestination.setStartDate(destinationRequest.getStartDate());
                         newDestination.setEndDate(destinationRequest.getEndDate());
                         newDestination.setNumberOfTravelers(destinationRequest.getNumberOfTravelers());
+
+                        newDestination.setPhoneToDestination(destinationRequest.getPhoneToDestination());
+                        newDestination.setDestinationAddress(destinationRequest.getDestinationAddress());
+                        newDestination.setChronicIllness(destinationRequest.getChronicIllness());
+                        newDestination.setCoverRequiredFor(destinationRequest.getCoverRequiredFor());
+                        newDestination.setPurposeOfTravel(destinationRequest.getPurposeOfTravel());
+                        newDestination.setTravelAirline(destinationRequest.getTravelAirline());
+
                         return destinationRepository.save(newDestination);
+
                     });
 
             // Create a new Passenger instance
@@ -55,13 +64,22 @@ public class PassengerServiceImpl implements PassengerService {
             passenger.setAge(Period.between(passengerRequest.getDateOfBirth(), LocalDate.now()).getYears());
             passenger.setPassportNumber(passengerRequest.getPassportNumber());
             passenger.setTelephone(passengerRequest.getTelephone());
-            passenger.setDestination(destination); // Associate the Destination with the Passenger
 
-            // Save the Passenger
+            passenger.setEmail(passengerRequest.getEmail());
+            passenger.setCitizenship(passengerRequest.getCitizenship());
+            passenger.setFixedPhoneNumber(passengerRequest.getFixedPhoneNumber());
+            passenger.setHouseNumber(passengerRequest.getHouseNumber());
+            passenger.setCity(passengerRequest.getCity());
+            passenger.setWoreda(passengerRequest.getWoreda());
+            passenger.setPostalCode(passengerRequest.getPostalCode());
+
+            passenger.setDestination(destination);
+
             Passenger savedPassenger = passengerRepository.save(passenger);
 
             // Add the response to the list
             passengerResponses.add(new PassengerResponse(
+
                     savedPassenger.getId(),
                     savedPassenger.getFirstName(),
                     savedPassenger.getLastName(),
@@ -69,7 +87,17 @@ public class PassengerServiceImpl implements PassengerService {
                     savedPassenger.getAge(),
                     savedPassenger.getPassportNumber(),
                     savedPassenger.getTelephone(),
+
+                    savedPassenger.getEmail(),
+                    savedPassenger.getCity(),
+                    savedPassenger.getWoreda(),
+                    savedPassenger.getCitizenship(),
+                    savedPassenger.getFixedPhoneNumber(),
+                    savedPassenger.getHouseNumber(),
+                    savedPassenger.getPostalCode(),
+
                     savedPassenger.getDestination()
+
             ));
         }
 
@@ -109,6 +137,15 @@ public class PassengerServiceImpl implements PassengerService {
         existingPassenger.setAge(Period.between(passenger.getDateOfBirth(), LocalDate.now()).getYears());
         existingPassenger.setPassportNumber(passenger.getPassportNumber());
         existingPassenger.setTelephone(passenger.getTelephone());
+
+        existingPassenger.setEmail(passenger.getEmail());
+        existingPassenger.setCity(passenger.getCity());
+        existingPassenger.setWoreda(passenger.getWoreda());
+        existingPassenger.setCitizenship(passenger.getCitizenship());
+        existingPassenger.setHouseNumber(passenger.getHouseNumber());
+        existingPassenger.setPostalCode(passenger.getPostalCode());
+        existingPassenger.setFixedPhoneNumber(passenger.getFixedPhoneNumber());
+
         existingPassenger.setDestination(destination);
 
         return passengerRepository.save(existingPassenger);
