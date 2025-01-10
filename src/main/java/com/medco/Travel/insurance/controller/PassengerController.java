@@ -5,6 +5,7 @@ import com.medco.Travel.insurance.dto.Response.PassengerResponse;
 import com.medco.Travel.insurance.entity.Passenger;
 import com.medco.Travel.insurance.service.PassengerService;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,21 +19,22 @@ public class PassengerController {
     @Autowired
     private PassengerService passengerService;
 
-    @PostMapping("/create")
-    public ResponseEntity<List<PassengerResponse>> createPassengers(@RequestBody List<PassengerRequest> passengerRequests) {
-        List<PassengerResponse> passengerResponses = passengerService.addPassengers(passengerRequests);
-        return ResponseEntity.ok(passengerResponses);
+    @PostMapping
+    public ResponseEntity<PassengerResponse> addPassenger(@RequestBody PassengerRequest passengerRequest) {
+        PassengerResponse passengerResponse = passengerService.addPassenger(passengerRequest);
+        return new ResponseEntity<>(passengerResponse, HttpStatus.CREATED);
     }
 
 
     @GetMapping("/{id}")
     public PassengerResponse getPassengerById(@PathVariable Long id) {
+
         return passengerService.getPassengerById(id);
     }
 
     @GetMapping("/all")
-    public ResponseEntity<List<Passenger>> getAllPassengers() {
-        List<Passenger> passengers = passengerService.getAllPassengers();
+    public ResponseEntity<List<PassengerResponse>> getAllPassengers() {
+        List<PassengerResponse> passengers = passengerService.getAllPassengers();
         return ResponseEntity.ok(passengers);
     }
 

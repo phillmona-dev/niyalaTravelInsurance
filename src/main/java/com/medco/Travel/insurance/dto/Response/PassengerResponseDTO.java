@@ -1,38 +1,29 @@
 package com.medco.Travel.insurance.dto.Response;
 
-import com.medco.Travel.insurance.entity.Dependent;
-import com.medco.Travel.insurance.entity.Destination;
-import lombok.*;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.List;
 
-@Setter
 @Getter
-@AllArgsConstructor
+@Setter
 @NoArgsConstructor
-@Builder
-public class PassengerResponse {
-
+@AllArgsConstructor
+public class PassengerResponseDTO {
     private Long id;
-
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;
     private int age;
     private String passportNumber;
     private String telephone;
-
     private String email;
     private String city;
     private String woreda;
-    private String citizenship;
-
-    private String fixedPhoneNumber;
     private String houseNumber;
-
+    private String citizenship;
+    private String fixedPhoneNumber;
     private String postalCode;
-
-    private Destination destination;
-    private List<DependentResponse> dependents;
 }

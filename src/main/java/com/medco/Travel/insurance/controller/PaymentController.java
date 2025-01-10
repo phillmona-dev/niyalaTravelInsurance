@@ -1,43 +1,46 @@
 package com.medco.Travel.insurance.controller;
 
-import com.medco.Travel.insurance.dto.Request.PaymentRequest;
-import com.medco.Travel.insurance.serviceImpl.TelebirrPaymentService;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.http.HttpStatus;
+import com.medco.Travel.insurance.dto.Request.ChapaPaymentRequest;
+import com.medco.Travel.insurance.dto.Response.ChapaPaymentResponse;
+import com.medco.Travel.insurance.serviceImpl.ChapaPaymentService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
+import java.io.IOException;
+
 @RestController
-@RequestMapping("/api/travel/payments")
+@RequestMapping("/api/payments")
 public class PaymentController {
 
-    private final TelebirrPaymentService telebirrPaymentService;
+    private final ChapaPaymentService paymentService;
 
-    @Autowired
-    public PaymentController(TelebirrPaymentService telebirrPaymentService) {
-        this.telebirrPaymentService = telebirrPaymentService;
+    public PaymentController(ChapaPaymentService paymentService) {
+        this.paymentService = paymentService;
     }
 
     @PostMapping("/initiate")
-    public ResponseEntity<String> initiatePayment(@RequestBody PaymentRequest paymentRequest) {
-        try {
-            // Call the Telebirr service to initiate the payment
-            String response = telebirrPaymentService.initiatePayment(paymentRequest.getAmount(), paymentRequest.getPhoneNumber());
-            return ResponseEntity.ok(response);  // Return the response from Telebirr
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Payment initiation failed: " + e.getMessage());
-        }
+    public ResponseEntity<ChapaPaymentResponse> initiatePayment(@RequestBody ChapaPaymentRequest paymentRequest) throws IOException {
+        paymentRequest.setCallbackUrl("http://192.168.100.82:8900/api/payments/callback");
+        paymentRequest.setReturnUrl("http://192.168.100.82:8900/api/payments/payment-success");
+        paymentRequest.setTxRef("unique-tx-ref-" + System.currentTimeMillis());
+        ChapaPaymentResponse response = paymentService.initiatePayment(paymentRequest);
+        return ResponseEntity.ok(response);
     }
 
-    // Endpoint to check payment status
-    @GetMapping("/status/{transactionId}")
-    public ResponseEntity<String> checkPaymentStatus(@PathVariable String transactionId) {
-        try {
-            // Call the Telebirr service to check the payment status
-            String response = telebirrPaymentService.checkPaymentStatus(transactionId);
-            return ResponseEntity.ok(response);  // Return the payment status
-        } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body("Failed to check payment status: " + e.getMessage());
-        }
+    @PostMapping("/callback")
+    public ResponseEntity<String> handleCallback(@RequestBody String callbackData) throws IOException {
+        // Parse the callbackData if needed and verify the transaction
+        // Extract txRef from the callbackData
+        String txRef = "extracted-tx-ref"; // Replace with actual logic to extract txRef
+        boolean isVerified = paymentService.verifyTransaction(txRef);
+        return ResponseEntity.ok(isVerified ? "Payment verified" : "Payment verification failed");
+    }
+
+    // Step 2: Handle Return URL after Payment Success
+    @GetMapping("/payment-success")
+    public String handlePaymentSuccess(@RequestParam String tx_ref, @RequestParam String status) {
+        return "Payment Status: " + status;
     }
 }
+
+

@@ -10,11 +10,11 @@ public interface PassengerService {
 
     PassengerResponse getPassengerById(Long id);
 
-    List<Passenger> getAllPassengers();
+    List<PassengerResponse> getAllPassengers();
 
     PassengerResponse updatePassenger(Long id, Passenger passenger);
 
     void deletePassenger(Long id);
 
-    List<PassengerResponse> addPassengers(List<PassengerRequest> passengerRequests);
+    PassengerResponse addPassenger(PassengerRequest passengerRequest);
 }

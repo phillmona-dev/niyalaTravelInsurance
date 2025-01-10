@@ -1,18 +1,20 @@
 package com.medco.Travel.insurance.serviceImpl;
 
-import com.medco.Travel.insurance.dto.Response.PremiumResponse;
+import com.medco.Travel.insurance.dto.Response.*;
+import com.medco.Travel.insurance.entity.Dependent;
 import com.medco.Travel.insurance.entity.Destination;
 import com.medco.Travel.insurance.entity.Passenger;
 import com.medco.Travel.insurance.entity.Premium;
+import com.medco.Travel.insurance.repository.DependentRepository;
 import com.medco.Travel.insurance.repository.DestinationRepository;
 import com.medco.Travel.insurance.repository.PassengerRepository;
 import com.medco.Travel.insurance.repository.PremiumRepository;
+import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -23,6 +25,7 @@ public class PremiumService {
     private final DestinationRepository destinationRepository;
     private final PremiumRepository premiumRepository;
     private final MapfreNotifier mapfreNotifier;
+    private final DependentRepository dependentRepository;
 
     @Autowired
     private ExchangeRateService exchangeRateService;
@@ -32,11 +35,13 @@ public class PremiumService {
             PassengerRepository passengerRepository,
             DestinationRepository destinationRepository,
             PremiumRepository premiumRepository,
-            MapfreNotifier mapfreNotifier) {
+            MapfreNotifier mapfreNotifier, DestinationRepository directorRepository, DependentRepository dependentRepository) {
         this.passengerRepository = passengerRepository;
         this.destinationRepository = destinationRepository;
         this.premiumRepository = premiumRepository;
         this.mapfreNotifier = mapfreNotifier;
+
+        this.dependentRepository = dependentRepository;
     }
 
     public PremiumResponse calculateAndSavePremium(Long passengerId, Long destinationId, LocalDate startDate, LocalDate endDate) {
@@ -45,40 +50,61 @@ public class PremiumService {
         Destination destination = destinationRepository.findById(destinationId)
                 .orElseThrow(() -> new RuntimeException("Destination not found"));
 
-        int numberOfTravelers = destination.getNumberOfTravelers();
-
-        int duration = Period.between(startDate, endDate).getDays() + 1; // Include both start and end dates
+        int duration = Period.between(startDate, endDate).getDays() + 1;
         if (duration <= 0) throw new RuntimeException("Invalid duration");
 
-        double euroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
+        double totalPremium = 0.0;
         double exchangeRate = exchangeRateService.getEuroToBirrRate();
+
+        // Calculate premium for the main passenger
+        double euroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
         double birrPremium = euroPremium * exchangeRate;
 
-        // Adjust the premium based on the number of travelers
-        double totalPremium = birrPremium * numberOfTravelers;
-
-        // Apply age-based adjustment
         int passengerAge = calculateAge(passenger.getDateOfBirth());
-        if (passengerAge >= 65 && passengerAge <= 80) {
-            totalPremium += totalPremium * 0.2; // Increase by 20%
-        } else if (passengerAge > 80) {
-            throw new RuntimeException("Passengers above the age of 80 are not allowed");
+        totalPremium += applyAgeBasedAdjustment(birrPremium, passengerAge);
+
+        // Fetch dependents and calculate their premiums
+        List<Dependent> dependents = dependentRepository.findByPassengerId(passengerId);
+        for (Dependent dependent : dependents) {
+            int dependentAge = calculateAge(dependent.getDateOfBirth());
+            double dependentEuroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
+            double dependentBirrPremium = dependentEuroPremium * exchangeRate;
+            totalPremium += applyAgeBasedAdjustment(dependentBirrPremium, dependentAge);
+
+            // Save premium for each dependent
+            Premium dependentPremium = new Premium();
+            dependentPremium.setPassenger(passenger);
+            dependentPremium.setDependent(dependent);
+            dependentPremium.setDestination(destination);
+            dependentPremium.setStartDate(startDate);
+            dependentPremium.setEndDate(endDate);
+            dependentPremium.setPremiumAmount(dependentBirrPremium);
+            dependentPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
+            premiumRepository.save(dependentPremium);
         }
 
-        // Get the cover limit for the destination
-        double coverLimit = getCoverLimit(destination.getCoverRequiredFor());
+        // Save premium for the main passenger
+        Premium passengerPremium = new Premium();
+        passengerPremium.setPassenger(passenger);
+        passengerPremium.setDestination(destination);
+        passengerPremium.setStartDate(startDate);
+        passengerPremium.setEndDate(endDate);
+        passengerPremium.setPremiumAmount(totalPremium);
+        passengerPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
+        premiumRepository.save(passengerPremium);
 
-        Premium premiumEntity = new Premium();
-        premiumEntity.setPassenger(passenger);
-        premiumEntity.setDestination(destination);
-        premiumEntity.setStartDate(startDate);
-        premiumEntity.setEndDate(endDate);
-        premiumEntity.setPremiumAmount(totalPremium); // Save the adjusted premium
-        premiumEntity.setCoverLimit(coverLimit); // Save the cover limit
-        premiumRepository.save(premiumEntity);
-
-        return new PremiumResponse(totalPremium, "Premium calculated and saved successfully, with a cover limit of " + coverLimit + " euros.");
+        return new PremiumResponse(totalPremium, "Premium calculated and saved successfully.");
     }
+
+    private double applyAgeBasedAdjustment(double premium, int age) {
+        if (age >= 65 && age <= 80) {
+            return premium + (premium * 0.2);
+        } else if (age > 80) {
+            throw new RuntimeException("Passengers above the age of 80 are not allowed");
+        }
+        return premium;
+    }
+
 
     private int calculateAge(LocalDate dateOfBirth) {
         if (dateOfBirth == null) throw new RuntimeException("Passenger's date of birth is not set");
@@ -180,9 +206,39 @@ public class PremiumService {
 
     }
 
-    public Premium getPremiumById(Long id) {
-        return premiumRepository.findById(id)
+    public PremiumResponseDTO getPremiumById(Long id) {
+        Premium premium = premiumRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Premium not found"));
+
+        // Map Premium to PremiumResponseDTO
+        PremiumResponseDTO premiumResponseDTO = new PremiumResponseDTO();
+        BeanUtils.copyProperties(premium, premiumResponseDTO);
+
+        // Map nested objects manually
+        if (premium.getPassenger() != null) {
+            PassengerResponseDTO passengerDTO = new PassengerResponseDTO();
+            BeanUtils.copyProperties(premium.getPassenger(), passengerDTO);
+            premiumResponseDTO.setPassenger(passengerDTO);
+        }
+
+        if (premium.getDestination() != null) {
+            DestinationResponseDTO destinationDTO = new DestinationResponseDTO();
+            BeanUtils.copyProperties(premium.getDestination(), destinationDTO);
+            premiumResponseDTO.setDestination(destinationDTO);
+        }
+
+        if (premium.getDependent() != null) {
+            DependentResponseDTO dependentDTO = new DependentResponseDTO();
+            BeanUtils.copyProperties(premium.getDependent(), dependentDTO);
+            premiumResponseDTO.setDependent(dependentDTO);
+        }
+
+        // Handle enums or other non-bean properties
+//        if (premium.getPremiumType() != null) {
+//            premiumResponseDTO.setPremiumType(premium.getPremiumType().name());
+//        }
+
+        return premiumResponseDTO;
     }
 
     public Premium updatePremium(Long id, Premium updatedPremium) {

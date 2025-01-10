@@ -71,6 +71,7 @@ public class EvidenceDocumentController {
 
     @GetMapping("/{id}/download")
     public ResponseEntity<Resource> downloadFile(@PathVariable Long id) {
+
         try {
 
             byte[] fileContent = evidenceDocumentService.getFileContent(id);

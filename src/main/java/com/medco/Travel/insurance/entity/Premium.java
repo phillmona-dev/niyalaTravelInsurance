@@ -32,5 +32,12 @@ public class Premium {
 
     private double coverLimit;
 
+    @ManyToOne
+    @JoinColumn(name = "dependent_id")
+    private Dependent dependent;
+
+//    @Enumerated(EnumType.STRING)
+//    private PremiumType premiumType;
+
 }
 

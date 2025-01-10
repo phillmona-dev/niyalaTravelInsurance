@@ -23,8 +23,8 @@ public class PolicyService {
     @Autowired
     private DestinationRepository destinationRepository;
 
-    @Autowired
-    private MapfreApiClient mapfreApiClient;
+//    @Autowired
+//    private MapfreApiClient mapfreApiClient;
     @Autowired
     private PassengerRepository passengerRepository;
     @Autowired

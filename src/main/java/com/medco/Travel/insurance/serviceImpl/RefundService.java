@@ -9,6 +9,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Service
 public class RefundService {
@@ -26,15 +27,24 @@ public class RefundService {
         Policy policy = policyRepository.findById(policyId)
                 .orElseThrow(() -> new RuntimeException("Policy not found"));
 
-        double refundAmount = policy.getPremiumAmount();
+        LocalDate startDate = policy.getStartDate();
+        LocalDate requestDate = LocalDate.now();
 
-        Refund refund = new Refund();
-        refund.setPolicyId(policyId);
-        refund.setRefundAmount(refundAmount);
-        refund.setRequestDate(LocalDate.now());
-        refund.setStatus(RefundStatus.PENDING);
+        // Check if the request date is on or before 2 days before the start date
+        if (!requestDate.isAfter(startDate.minusDays(2))) {
+            double refundAmount = policy.getPremiumAmount();
 
-        return refundRepository.save(refund);
+            Refund refund = new Refund();
+            refund.setPolicyId(policyId);
+            refund.setRefundAmount(refundAmount);
+            refund.setRequestDate(requestDate);
+            refund.setStatus(RefundStatus.PENDING);
+
+            return refundRepository.save(refund);
+
+        } else {
+            throw new RuntimeException("Refund request is not allowed. You can only request a refund up to 2 days before the start date.");
+        }
     }
 
     public Refund approveRefund(Long refundId) {
@@ -52,5 +62,44 @@ public class RefundService {
         refund.setStatus(RefundStatus.REJECTED);
         return refundRepository.save(refund);
     }
+
+    public List<Refund> getRefunds(RefundStatus status, LocalDate startDate, LocalDate endDate, Long policyId) {
+        if (status != null) {
+            return getRefundsByStatus(status, startDate, endDate);
+        }
+
+        if (startDate != null || endDate != null) {
+            return getRefundsByDateRange(startDate, endDate);
+        }
+
+        if (policyId != null) {
+            return refundRepository.findByPolicyId(policyId);
+        }
+
+        return refundRepository.findAll();
+    }
+
+    private List<Refund> getRefundsByDateRange(LocalDate startDate, LocalDate endDate) {
+        if (startDate != null && endDate != null) {
+            return refundRepository.findByRequestDateBetween(startDate, endDate);
+        } else if (startDate != null) {
+            return refundRepository.findByRequestDateAfter(startDate);
+        }else {
+            return refundRepository.findByRequestDateBefore(endDate);
+        }
+    }
+
+    private List<Refund> getRefundsByStatus(RefundStatus status, LocalDate startDate, LocalDate endDate) {
+      if (startDate != null && endDate != null) {
+          return refundRepository.findByStatusAndRequestDateBetween(status, startDate, endDate);
+      } else if (startDate != null) {
+          return refundRepository.findByStatusAndRequestDateAfter(status, startDate);
+      }else if (endDate != null) {
+          return refundRepository.findByStatusAndRequestDateBefore(status, endDate);
+      }else {
+          return refundRepository.findByStatus(status);
+      }
+    }
+
 }
 

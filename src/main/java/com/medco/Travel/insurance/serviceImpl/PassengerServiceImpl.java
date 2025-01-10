@@ -2,9 +2,13 @@ package com.medco.Travel.insurance.serviceImpl;
 
 import com.medco.Travel.insurance.dto.Request.DestinationRequest;
 import com.medco.Travel.insurance.dto.Request.PassengerRequest;
+import com.medco.Travel.insurance.dto.Response.DependentResponse;
 import com.medco.Travel.insurance.dto.Response.PassengerResponse;
+import com.medco.Travel.insurance.entity.Dependent;
 import com.medco.Travel.insurance.entity.Destination;
 import com.medco.Travel.insurance.entity.Passenger;
+import com.medco.Travel.insurance.exception.ResourceNotFoundException;
+import com.medco.Travel.insurance.repository.DependentRepository;
 import com.medco.Travel.insurance.repository.DestinationRepository;
 import com.medco.Travel.insurance.repository.PassengerRepository;
 import com.medco.Travel.insurance.service.PassengerService;
@@ -16,7 +20,7 @@ import java.time.LocalDate;
 import java.time.Period;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Optional;
+import java.util.stream.Collectors;
 
 @Service
 public class PassengerServiceImpl implements PassengerService {
@@ -25,103 +29,127 @@ public class PassengerServiceImpl implements PassengerService {
     private PassengerRepository passengerRepository;
 
     @Autowired
+    private DependentRepository dependentRepository;
+
+    @Autowired
     private DestinationRepository destinationRepository;
 
     @Override
-    public List<PassengerResponse> addPassengers(List<PassengerRequest> passengerRequests) {
-        List<PassengerResponse> passengerResponses = new ArrayList<>();
+    public PassengerResponse addPassenger(PassengerRequest passengerRequest) {
+        PassengerResponse passengerResponse = new PassengerResponse();
 
-        for (PassengerRequest passengerRequest : passengerRequests) {
-            // Extract DestinationRequest from PassengerRequest
-            DestinationRequest destinationRequest = passengerRequest.getDestination();
+        // Extract DestinationRequest from PassengerRequest
+        DestinationRequest destinationRequest = passengerRequest.getDestination();
 
-            // Check if a matching Destination exists (based on unique fields like countryName)
-            Destination destination = destinationRepository.findByCountryName(destinationRequest.getCountryName())
-                    .orElseGet(() -> {
-                        // Create a new Destination if it doesn't exist
-                        Destination newDestination = new Destination();
-                        newDestination.setCountryName(destinationRequest.getCountryName());
-                        newDestination.setStartDate(destinationRequest.getStartDate());
-                        newDestination.setEndDate(destinationRequest.getEndDate());
-                        newDestination.setNumberOfTravelers(destinationRequest.getNumberOfTravelers());
+        // Check if a matching Destination exists (based on unique fields like countryName)
+        Destination destination = destinationRepository.findByCountryName(destinationRequest.getCountryName())
+                .orElseGet(() -> {
+                    // Create and save a new Destination if it doesn't exist
+                    Destination newDestination = new Destination();
+                    BeanUtils.copyProperties(destinationRequest, newDestination);
+                    return destinationRepository.save(newDestination);
+                });
 
-                        newDestination.setPhoneToDestination(destinationRequest.getPhoneToDestination());
-                        newDestination.setDestinationAddress(destinationRequest.getDestinationAddress());
-                        newDestination.setChronicIllness(destinationRequest.getChronicIllness());
-                        newDestination.setCoverRequiredFor(destinationRequest.getCoverRequiredFor());
-                        newDestination.setPurposeOfTravel(destinationRequest.getPurposeOfTravel());
-                        newDestination.setTravelAirline(destinationRequest.getTravelAirline());
 
-                        return destinationRepository.save(newDestination);
+        Passenger passenger = new Passenger();
+        BeanUtils.copyProperties(passengerRequest, passenger);
+        passenger.setAge(Period.between(passengerRequest.getDateOfBirth(), LocalDate.now()).getYears());
+        passenger.setDestination(destination);
+        List<Dependent> dependents=new ArrayList<>();
 
-                    });
+        if (passengerRequest.getDependents() != null && !passengerRequest.getDependents().isEmpty()) {
+             dependents = passengerRequest.getDependents().stream()
+                    .map(dependentRequest -> {
+                        Dependent dependent = new Dependent();
+                        BeanUtils.copyProperties(dependentRequest, dependent);
+                        dependent.setPassenger(passenger);
+                        return dependent;
+                    })
+                    .collect(Collectors.toList());
 
-            // Create a new Passenger instance
-            Passenger passenger = new Passenger();
-            passenger.setFirstName(passengerRequest.getFirstName());
-            passenger.setLastName(passengerRequest.getLastName());
-            passenger.setDateOfBirth(passengerRequest.getDateOfBirth());
-            passenger.setAge(Period.between(passengerRequest.getDateOfBirth(), LocalDate.now()).getYears());
-            passenger.setPassportNumber(passengerRequest.getPassportNumber());
-            passenger.setTelephone(passengerRequest.getTelephone());
+        }
+        passenger.setDependents(dependents);
+        Passenger savedPassenger = passengerRepository.save(passenger);
 
-            passenger.setEmail(passengerRequest.getEmail());
-            passenger.setCitizenship(passengerRequest.getCitizenship());
-            passenger.setFixedPhoneNumber(passengerRequest.getFixedPhoneNumber());
-            passenger.setHouseNumber(passengerRequest.getHouseNumber());
-            passenger.setCity(passengerRequest.getCity());
-            passenger.setWoreda(passengerRequest.getWoreda());
-            passenger.setPostalCode(passengerRequest.getPostalCode());
+          System.out.println(savedPassenger.getDependents().get(0).getFirstName());
 
-            passenger.setDestination(destination);
+        Passenger fetchedPassenger = passengerRepository.findByIdWithDependents(savedPassenger.getId())
+                .orElseThrow(() -> new RuntimeException("Passenger not found"));
 
-            Passenger savedPassenger = passengerRepository.save(passenger);
+        BeanUtils.copyProperties(fetchedPassenger, passengerResponse);
+        passengerResponse.setDestination(fetchedPassenger.getDestination());
 
-            // Add the response to the list
-            passengerResponses.add(new PassengerResponse(
-
-                    savedPassenger.getId(),
-                    savedPassenger.getFirstName(),
-                    savedPassenger.getLastName(),
-                    savedPassenger.getDateOfBirth(),
-                    savedPassenger.getAge(),
-                    savedPassenger.getPassportNumber(),
-                    savedPassenger.getTelephone(),
-
-                    savedPassenger.getEmail(),
-                    savedPassenger.getCity(),
-                    savedPassenger.getWoreda(),
-                    savedPassenger.getCitizenship(),
-                    savedPassenger.getFixedPhoneNumber(),
-                    savedPassenger.getHouseNumber(),
-                    savedPassenger.getPostalCode(),
-
-                    savedPassenger.getDestination()
-
-            ));
+        // Map dependents to the response
+        if (fetchedPassenger.getDependents() != null && !fetchedPassenger.getDependents().isEmpty()) {
+            List<DependentResponse> dependentResponses = fetchedPassenger.getDependents().stream()
+                    .map(dependent -> {
+                        DependentResponse dependentResponse = new DependentResponse();
+                        BeanUtils.copyProperties(dependent, dependentResponse);
+                        return dependentResponse;
+                    })
+                    .collect(Collectors.toList());
+            passengerResponse.setDependents(dependentResponses);
         }
 
-        return passengerResponses;
+        return passengerResponse;
     }
+
+
 
     @Override
     public PassengerResponse getPassengerById(Long id) {
-
-        Optional<Passenger> passenger = passengerRepository.findById(id);
+        Passenger passenger = passengerRepository.findByIdWithDependents(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Passenger not found"));
 
         PassengerResponse passengerResponse = new PassengerResponse();
         BeanUtils.copyProperties(passenger, passengerResponse);
 
-        return passengerResponse;
+        // Map dependents to the response
+        if (passenger.getDependents() != null && !passenger.getDependents().isEmpty()) {
+            List<DependentResponse> dependentResponses = passenger.getDependents().stream()
+                    .map(dependent -> {
+                        DependentResponse dependentResponse = new DependentResponse();
+                        BeanUtils.copyProperties(dependent, dependentResponse);
+                        return dependentResponse;
+                    })
+                    .collect(Collectors.toList());
+            passengerResponse.setDependents(dependentResponses);
+        }
 
+        return passengerResponse;
     }
 
     @Override
-    public List<Passenger> getAllPassengers() {
+    public List<PassengerResponse> getAllPassengers() {
+        List<Passenger> passengers = passengerRepository.findAll();
 
-        return passengerRepository.findAll();
+        return passengers.stream().map(passenger -> {
+            PassengerResponse passengerResponse = new PassengerResponse();
+            BeanUtils.copyProperties(passenger, passengerResponse);
 
+            // Set destination
+            if (passenger.getDestination() != null) {
+                Destination destination = new Destination();
+                BeanUtils.copyProperties(passenger.getDestination(), destination);
+                passengerResponse.setDestination(destination);
+            }
+
+            // Set dependents
+            if (passenger.getDependents() != null && !passenger.getDependents().isEmpty()) {
+                List<DependentResponse> dependentResponses = passenger.getDependents().stream()
+                        .map(dependent -> {
+                            DependentResponse dependentResponse = new DependentResponse();
+                            BeanUtils.copyProperties(dependent, dependentResponse);
+                            return dependentResponse;
+                        })
+                        .collect(Collectors.toList());
+                passengerResponse.setDependents(dependentResponses);
+            }
+
+            return passengerResponse;
+        }).collect(Collectors.toList());
     }
+
 
     @Override
     public PassengerResponse updatePassenger(Long id, Passenger passenger) {

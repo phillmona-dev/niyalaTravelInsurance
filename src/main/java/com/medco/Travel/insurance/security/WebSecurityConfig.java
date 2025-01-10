@@ -98,7 +98,8 @@ public class WebSecurityConfig {
                                         "/api/travel/payments/**",
                                         "/api/travel/premium/**",
                                         "/api/travel/otp/**",
-                                        "/api/travel/users/**"
+                                        "/api/travel/users/**",
+                                        "/api/payments/**"
 
 
                                 ).permitAll()

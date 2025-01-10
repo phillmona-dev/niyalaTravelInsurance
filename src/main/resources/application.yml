@@ -53,16 +53,18 @@ mapfre:
     key: dev-mapfre-api-key
     url: http://localhost:8080/mock-mapfre/calculate-premium
 
-# Telebirr API Configuration
-telebirr:
+# chapa API Configuration
+chapa:
   api:
-    key: your_api_key_here
-    url: https://api.telebirr.com
+    base-url: https://api.chapa.co/v1/transaction/initialize
+    key: CHASECK_TEST-IHCoV5WRDK4phVR2g2tqLGIqzCIKfwT5
 
 afromessage:
   api:
     url: "https://api.afromessage.com/api/send"
     token: eyJhbGciOiJIUzI1NiJ9.eyJpZGVudGlmaWVyIjoiYkpUZ1VZVzJoaTZnaFo5QTJDSjBaU3pzeWhLZ2ZtVWsiLCJleHAiOjE4OTM0NzkxNjUsImlhdCI6MTczNTcxMjc2NSwianRpIjoiMmVlMGNmOWUtOGFlMC00NDQ0LWFjY2UtODdhNjU0MjhiNmQxIn0.D5_eQNtA4HNaNuVo1O6pydwaZ-sn3fpWZa-g4rjl1IU
     identifierId: e80ad9d8-adf3-463f-80f4-7c4b39f7f164
-#    senderName: Yemane Alem
+#    senderName:
 #    callbackUrl: http://192.168.100.82:8888/api/notifications/sms-status
+
+

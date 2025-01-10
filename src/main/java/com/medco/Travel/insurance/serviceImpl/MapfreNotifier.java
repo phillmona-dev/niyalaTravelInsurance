@@ -24,27 +24,32 @@ public class MapfreNotifier {
     private final RestTemplate restTemplate = new RestTemplate();
 
     /**
-     * Notifies Mapfre about the calculated premium.
+     * Notifies Mapfre about the insured passenger and premium.
      *
      * @param passenger   the passenger details
      * @param destination the destination details
      * @param premium     the calculated premium
      */
     public void notifyMapfre(Passenger passenger, Destination destination, double premium) {
+
         HttpHeaders headers = new HttpHeaders();
         headers.set("Authorization", "Bearer " + apiKey);
 
         Map<String, Object> requestBody = new HashMap<>();
-        requestBody.put("userAge", passenger.getAge());
+        requestBody.put("firstName", passenger.getFirstName());
+        requestBody.put("lastName", passenger.getLastName());
+        requestBody.put("age", passenger.getAge());
+        requestBody.put("passportNumber", passenger.getPassportNumber());
         requestBody.put("destination", destination.getCountryName());
+        requestBody.put("startDate", destination.getStartDate());
+        requestBody.put("endDate", destination.getEndDate());
         requestBody.put("premium", premium);
 
         HttpEntity<Map<String, Object>> entity = new HttpEntity<>(requestBody, headers);
 
         ResponseEntity<Map> response = restTemplate.postForEntity(apiUrl, entity, Map.class);
         if (!response.getStatusCode().is2xxSuccessful()) {
-            throw new RuntimeException("Failed to notify Mapfre");
+            throw new RuntimeException("Failed to notify Mapfre: " + response.getStatusCode());
         }
     }
 }
-

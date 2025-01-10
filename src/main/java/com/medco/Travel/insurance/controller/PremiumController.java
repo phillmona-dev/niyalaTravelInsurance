@@ -1,6 +1,7 @@
 package com.medco.Travel.insurance.controller;
 
 import com.medco.Travel.insurance.dto.Response.PremiumResponse;
+import com.medco.Travel.insurance.dto.Response.PremiumResponseDTO;
 import com.medco.Travel.insurance.entity.Premium;
 import com.medco.Travel.insurance.serviceImpl.PremiumService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,15 +22,6 @@ public class PremiumController {
         this.premiumService = premiumService;
     }
 
-    /**
-     * Endpoint to calculate the premium for a passenger and destination.
-     *
-     * @param passengerId the ID of the passenger
-     * @param destinationId the ID of the destination
-     * @param startDate the start date of the trip
-     * @param endDate the end date of the trip
-     * @return the premium response
-     */
     @PostMapping("/calculate")
     public ResponseEntity<PremiumResponse> calculatePremium(
             @RequestParam Long passengerId,
@@ -48,9 +40,9 @@ public class PremiumController {
     }
 
     @GetMapping("/{id}")
-    public ResponseEntity<Premium> getPremiumById(@PathVariable Long id) {
-        Premium premium = premiumService.getPremiumById(id);
-        return ResponseEntity.ok(premium);
+    public ResponseEntity<PremiumResponseDTO> getPremiumById(@PathVariable Long id) {
+        PremiumResponseDTO premiumResponse = premiumService.getPremiumById(id);
+        return ResponseEntity.ok(premiumResponse);
     }
 
     @PutMapping("/{id}")

@@ -41,7 +41,6 @@ public class OtpController {
                     .toList());
             logger.info("Payload (phoneNumber): {}", otpRequest.getPhoneNumber());
 
-            // Generate and send OTP
             otpService.generateAndSendOtp(otpRequest.getPhoneNumber());
 
             logger.info("OTP sent successfully to {}", otpRequest.getPhoneNumber());
@@ -53,16 +52,16 @@ public class OtpController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
                     .body("Failed to send OTP to " + otpRequest.getPhoneNumber() + ". Error: " + e.getMessage());
         }
+
     }
 
     @PostMapping("/verify")
     public ResponseEntity<String> verifyOtp(@RequestBody OtpVerificationRequest otpVerificationRequest) {
         try {
-            // Extract phone number and OTP from the request body
+
             String phoneNumber = otpVerificationRequest.getPhoneNumber();
             String otp = otpVerificationRequest.getOtp();
 
-            // Verify the OTP
             boolean isValid = otpService.verifyOtp(phoneNumber, otp);
 
             if (isValid) {

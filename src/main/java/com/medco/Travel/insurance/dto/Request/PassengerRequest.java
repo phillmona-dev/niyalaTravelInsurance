@@ -3,6 +3,7 @@ package com.medco.Travel.insurance.dto.Request;
 import lombok.*;
 
 import java.time.LocalDate;
+import java.util.List;
 
 @Getter
 @Setter
@@ -27,4 +28,5 @@ public class PassengerRequest {
     private String postalCode;
 
     private DestinationRequest destination;
+    private List<DependentRequest> dependents;
 }
