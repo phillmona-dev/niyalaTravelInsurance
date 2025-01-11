@@ -54,11 +54,11 @@ class Currency {
 
 }
 
-
+//&csrt=133792713376438398
 @Service
 public class ExchangeRateService {
 
-    private static final String URL = "https://combanketh.et/cbeapi/daily-exchange-rates?_limit=1&_sort=Date%3ADESC&csrt=133792713376438398";
+    private static final String URL = "https://combanketh.et/cbeapi/daily-exchange-rates?_limit=1&_sort=Date%3ADESC";
 
     @Autowired
     private ExchangeRateRepository exchangeRateRepository;
@@ -86,14 +86,24 @@ public class ExchangeRateService {
         return lastUpdated.isAfter(LocalDateTime.now().minusDays(1));
     }
 
-    private void cleanupOldRates() {
 
-        exchangeRateRepository.deleteAllByLastUpdatedBefore(LocalDateTime.now().minusDays(1));
+    private void cleanupOldRates() {
+try {
+    exchangeRateRepository.deleteAllByLastUpdatedBefore(LocalDateTime.now().minusDays(1));
+}catch (Exception e) {
+    e.printStackTrace();
+    System.out.println("wwwwwwwww" + e.getMessage());
+}
+
     }
 
     private float fetchEuroToBirrRateFromWebsite() {
         try {
-            Connection.Response response = Jsoup.connect(URL).ignoreContentType(true).method(Connection.Method.GET).execute();
+            Connection.Response response = Jsoup.connect(URL)
+                    .ignoreContentType(true)
+                    .method(Connection.Method.GET)
+                    .timeout(40000)
+                    .execute();
 
             ObjectMapper objectMapper = new ObjectMapper();
             List<Currency> currencies = objectMapper.readValue(response.body(), new TypeReference<List<Currency>>() {});

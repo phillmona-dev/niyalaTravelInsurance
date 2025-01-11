@@ -21,6 +21,8 @@ import java.util.Map;
 @Service
 public class PremiumService {
 
+//    private static final Logger logger = LoggerFactory.getLogger(PremiumService.class);
+
     private final PassengerRepository passengerRepository;
     private final DestinationRepository destinationRepository;
     private final PremiumRepository premiumRepository;
@@ -53,23 +55,38 @@ public class PremiumService {
         int duration = Period.between(startDate, endDate).getDays() + 1;
         if (duration <= 0) throw new RuntimeException("Invalid duration");
 
-        double totalPremium = 0.0;
+        double totalPremiumInEuro = 0.0;
         double exchangeRate = exchangeRateService.getEuroToBirrRate();
 
         // Calculate premium for the main passenger
         double euroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
-        double birrPremium = euroPremium * exchangeRate;
-
         int passengerAge = calculateAge(passenger.getDateOfBirth());
-        totalPremium += applyAgeBasedAdjustment(birrPremium, passengerAge);
+        double adjustedEuroPremium = applyAgeBasedAdjustment(euroPremium, passengerAge);
+
+        totalPremiumInEuro += adjustedEuroPremium;
+
+        // Save premium for the main passenger
+        Premium passengerPremium = new Premium();
+        passengerPremium.setPassenger(passenger);
+        passengerPremium.setDestination(destination);
+        passengerPremium.setStartDate(startDate);
+        passengerPremium.setEndDate(endDate);
+        passengerPremium.setPremiumAmount(adjustedEuroPremium); // Save in Euro
+        passengerPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
+        premiumRepository.save(passengerPremium);
+
+        // Log the main passenger's premium
+        System.out.println("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  ");
+        System.out.println("Main passenger premium in Euro: " + adjustedEuroPremium);
 
         // Fetch dependents and calculate their premiums
         List<Dependent> dependents = dependentRepository.findByPassengerId(passengerId);
         for (Dependent dependent : dependents) {
             int dependentAge = calculateAge(dependent.getDateOfBirth());
             double dependentEuroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
-            double dependentBirrPremium = dependentEuroPremium * exchangeRate;
-            totalPremium += applyAgeBasedAdjustment(dependentBirrPremium, dependentAge);
+            double dependentAdjustedEuroPremium = applyAgeBasedAdjustment(dependentEuroPremium, dependentAge);
+
+            totalPremiumInEuro += dependentAdjustedEuroPremium;
 
             // Save premium for each dependent
             Premium dependentPremium = new Premium();
@@ -78,22 +95,21 @@ public class PremiumService {
             dependentPremium.setDestination(destination);
             dependentPremium.setStartDate(startDate);
             dependentPremium.setEndDate(endDate);
-            dependentPremium.setPremiumAmount(dependentBirrPremium);
+            dependentPremium.setPremiumAmount(dependentAdjustedEuroPremium);
             dependentPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
             premiumRepository.save(dependentPremium);
+
+            // Log each dependent's premium
+            System.out.println("Dependent premium in Euro (" + dependent.getFirstName() + "): " + dependentAdjustedEuroPremium);
         }
 
-        // Save premium for the main passenger
-        Premium passengerPremium = new Premium();
-        passengerPremium.setPassenger(passenger);
-        passengerPremium.setDestination(destination);
-        passengerPremium.setStartDate(startDate);
-        passengerPremium.setEndDate(endDate);
-        passengerPremium.setPremiumAmount(totalPremium);
-        passengerPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
-        premiumRepository.save(passengerPremium);
+        // Convert total premium to Birr
+        double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
 
-        return new PremiumResponse(totalPremium, "Premium calculated and saved successfully.");
+        System.out.println("Total premium in Euro (main passenger + dependents): " + totalPremiumInEuro);
+        System.out.println("Total premium in Birr (main passenger + dependents): " + totalPremiumInBirr);
+
+        return new PremiumResponse(totalPremiumInBirr, "Premium calculated and saved successfully.");
     }
 
     private double applyAgeBasedAdjustment(double premium, int age) {
