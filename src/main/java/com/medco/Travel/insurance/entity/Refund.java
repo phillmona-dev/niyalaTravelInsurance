@@ -17,7 +17,7 @@ import java.time.LocalDate;
 public class Refund {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long refundId;
 
     private Long policyId;
     private double refundAmount;

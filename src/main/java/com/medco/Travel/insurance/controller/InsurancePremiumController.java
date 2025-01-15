@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 @RestController
-@RequestMapping("/api/insurance")
+@RequestMapping("/api/travel/insurance")
 public class InsurancePremiumController {
 
     private final InsurancePremiumService insurancePremiumService;

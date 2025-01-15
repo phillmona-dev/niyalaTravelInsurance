@@ -29,7 +29,7 @@ public class PremiumController {
             @RequestParam LocalDate startDate,
             @RequestParam LocalDate endDate) {
 
-        PremiumResponse response = premiumService.calculateAndSavePremium(passengerId, destinationId, startDate, endDate);
+        PremiumResponse response = premiumService.calculateAndSavePremium(passengerId, destinationId);
         return ResponseEntity.ok(response);
     }
 

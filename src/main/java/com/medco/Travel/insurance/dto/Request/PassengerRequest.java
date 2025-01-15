@@ -26,6 +26,7 @@ public class PassengerRequest {
     private String citizenship;
     private String fixedPhoneNumber;
     private String postalCode;
+    private String chronicIllness;
 
     private DestinationRequest destination;
     private List<DependentRequest> dependents;

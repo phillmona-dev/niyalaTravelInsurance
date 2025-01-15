@@ -14,6 +14,7 @@ import org.jsoup.Connection;
 import org.jsoup.Jsoup;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.io.IOException;
 import java.time.LocalDateTime;
@@ -56,6 +57,7 @@ class Currency {
 
 //&csrt=133792713376438398
 @Service
+@Transactional
 public class ExchangeRateService {
 
     private static final String URL = "https://combanketh.et/cbeapi/daily-exchange-rates?_limit=1&_sort=Date%3ADESC";
@@ -86,14 +88,15 @@ public class ExchangeRateService {
         return lastUpdated.isAfter(LocalDateTime.now().minusDays(1));
     }
 
-
-    private void cleanupOldRates() {
+    @Transactional
+    protected void cleanupOldRates() {
 try {
     exchangeRateRepository.deleteAllByLastUpdatedBefore(LocalDateTime.now().minusDays(1));
 }catch (Exception e) {
     e.printStackTrace();
     System.out.println("wwwwwwwww" + e.getMessage());
 }
+
 
     }
 

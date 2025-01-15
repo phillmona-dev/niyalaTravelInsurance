@@ -13,7 +13,7 @@ import java.time.LocalDate;
 public class Dependent {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long dependentId;
 
     private String firstName;
     private String lastName;

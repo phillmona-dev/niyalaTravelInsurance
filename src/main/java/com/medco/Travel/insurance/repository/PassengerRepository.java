@@ -15,15 +15,15 @@ import java.util.Optional;
 public interface PassengerRepository extends JpaRepository<Passenger, Long> {
     PassengerResponse save(PassengerRequest passenger);
 
-    Optional<Passenger> findById(Long id);
+    Optional<Passenger> findByPassengerId(Long passengerId);
 
     List<Passenger> findAll();
 
-    void deleteById(Long id);
+    void deleteByPassengerId(Long passengerId);
 
     PassengerResponse save(PassengerResponse existingPassenger);
 
-    @Query("SELECT p FROM Passenger p LEFT JOIN FETCH p.dependents WHERE p.id = :id")
-    Optional<Passenger> findByIdWithDependents(@Param("id") Long id);
+    @Query("SELECT p FROM Passenger p LEFT JOIN FETCH p.dependents WHERE p.passengerId = :passengerId")
+    Optional<Passenger> findByIdWithDependents(@Param("passengerId") Long passengerId);
 
 }

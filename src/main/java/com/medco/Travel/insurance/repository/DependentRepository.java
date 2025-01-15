@@ -8,5 +8,5 @@ import java.util.List;
 
 @Repository
 public interface DependentRepository extends JpaRepository<Dependent, Long> {
-    List<Dependent> findByPassengerId(Long passengerId);
+    List<Dependent> findByPassenger_passengerId(Long passengerId);
 }

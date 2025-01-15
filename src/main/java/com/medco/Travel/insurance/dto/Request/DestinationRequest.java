@@ -7,7 +7,8 @@ import java.time.LocalDate;
 @Setter
 @Getter
 @AllArgsConstructor
-@NoArgsConstructor@Builder
+@NoArgsConstructor
+@Builder
 public class DestinationRequest {
 
     private String countryName;
@@ -20,6 +21,5 @@ public class DestinationRequest {
     private String destinationAddress;
     private String phoneToDestination;
     private String coverRequiredFor;
-    private String chronicIllness;
 
 }

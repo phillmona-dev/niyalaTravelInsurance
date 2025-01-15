@@ -14,7 +14,7 @@ import java.util.List;
 @Builder
 public class PassengerResponse {
 
-    private Long id;
+    private Long passengerId;
 
     private String firstName;
     private String lastName;

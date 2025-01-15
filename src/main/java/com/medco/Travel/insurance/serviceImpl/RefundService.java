@@ -32,7 +32,12 @@ public class RefundService {
 
         // Check if the request date is on or before 2 days before the start date
         if (!requestDate.isAfter(startDate.minusDays(2))) {
-            double refundAmount = policy.getPremiumAmount();
+            double totalPremiumPaid = policy.getPremiumAmount();
+            double refundAmount = totalPremiumPaid - 200;
+
+            if (refundAmount < 0) {
+                throw new RuntimeException("Refund amount cannot be negative.");
+            }
 
             Refund refund = new Refund();
             refund.setPolicyId(policyId);
@@ -46,6 +51,7 @@ public class RefundService {
             throw new RuntimeException("Refund request is not allowed. You can only request a refund up to 2 days before the start date.");
         }
     }
+
 
     public Refund approveRefund(Long refundId) {
         Refund refund = refundRepository.findById(refundId)

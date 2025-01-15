@@ -1,4 +1,4 @@
-package com.medco.Travel.insurance.dto.Request;
+package com.medco.Travel.insurance.dto.Response;
 
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -6,17 +6,14 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @Setter
 @Getter
 @AllArgsConstructor
 @NoArgsConstructor
-public class InsurancePremiumRequest {
-    private String coverRequiredFor;
+public class PassengerMyResponse {
+    private Long passengerId;
+    private Long destinationId;
     private LocalDate startDate;
     private LocalDate endDate;
-    private int numberOfTravelers;
-    private List<Integer> travelerAges;
 }
-

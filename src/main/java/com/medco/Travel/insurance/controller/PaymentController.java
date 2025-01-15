@@ -9,7 +9,7 @@ import org.springframework.web.bind.annotation.*;
 import java.io.IOException;
 
 @RestController
-@RequestMapping("/api/payments")
+@RequestMapping("/api/travel/payments")
 public class PaymentController {
 
     private final ChapaPaymentService paymentService;

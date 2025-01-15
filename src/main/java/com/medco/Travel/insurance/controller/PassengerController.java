@@ -1,6 +1,7 @@
 package com.medco.Travel.insurance.controller;
 
 import com.medco.Travel.insurance.dto.Request.PassengerRequest;
+import com.medco.Travel.insurance.dto.Response.PassengerMyResponse;
 import com.medco.Travel.insurance.dto.Response.PassengerResponse;
 import com.medco.Travel.insurance.entity.Passenger;
 import com.medco.Travel.insurance.service.PassengerService;
@@ -20,8 +21,8 @@ public class PassengerController {
     private PassengerService passengerService;
 
     @PostMapping
-    public ResponseEntity<PassengerResponse> addPassenger(@RequestBody PassengerRequest passengerRequest) {
-        PassengerResponse passengerResponse = passengerService.addPassenger(passengerRequest);
+    public ResponseEntity<PassengerMyResponse> addPassenger(@RequestBody PassengerRequest passengerRequest) {
+        PassengerMyResponse passengerResponse = passengerService.addPassenger(passengerRequest);
         return new ResponseEntity<>(passengerResponse, HttpStatus.CREATED);
     }
 

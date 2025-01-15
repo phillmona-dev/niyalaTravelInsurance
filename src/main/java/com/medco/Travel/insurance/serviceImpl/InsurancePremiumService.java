@@ -2,10 +2,11 @@ package com.medco.Travel.insurance.serviceImpl;
 
 import com.medco.Travel.insurance.dto.Request.InsurancePremiumRequest;
 import com.medco.Travel.insurance.dto.Response.InsurancePremiumResponse;
+
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
-import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.Map;
 
 @Service
@@ -17,7 +18,9 @@ public class InsurancePremiumService {
     private PremiumService premiumService;
 
     public InsurancePremiumResponse calculatePremium(InsurancePremiumRequest request) {
-        int tripDuration = Period.between(request.getStartDate(), request.getEndDate()).getDays() + 1;
+//        int tripDuration = Period.between(request.getStartDate(), request.getEndDate()).getDays() + 1;
+        int tripDuration = (int) (ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate())+1);
+        System.out.println("trip duration: " + tripDuration);
         if (tripDuration <= 0) {
             throw new IllegalArgumentException("End date must be after start date.");
         }
@@ -26,33 +29,33 @@ public class InsurancePremiumService {
         double exchangeRate = exchangeRateService.getEuroToBirrRate();
         System.out.println("Exchange Rate (Euro to Birr): " + exchangeRate);
 
-        // Calculate total premium in euros
         for (int i = 0; i < request.getNumberOfTravelers(); i++) {
             int age = request.getTravelerAges().get(i);
-            double euroPremium = calculatePremiumInEuro(request.getDestination(), tripDuration);
+            double euroPremium = calculatePremiumInEuro(request.getCoverRequiredFor(), tripDuration);
             System.out.println("Traveler " + (i + 1) + ": Euro Premium = " + euroPremium);
 
-            // Apply age adjustment to the premium in euros
             double adjustedEuroPremium = applyAgeAdjustment(euroPremium, age);
             System.out.println("Traveler " + (i + 1) + ": Adjusted Euro Premium = " + adjustedEuroPremium);
 
             totalPremiumInEuro += adjustedEuroPremium;
+
         }
 
         System.out.println("Total Premium in Euro (before conversion): " + totalPremiumInEuro);
 
-        // Convert total premium from euros to birr
         double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
+        totalPremiumInBirr = Math.round(totalPremiumInBirr*100.0)/100.0;
         System.out.println("Total Premium in Birr (after conversion): " + totalPremiumInBirr);
 
-        // Return the calculated premium
-        return new InsurancePremiumResponse(tripDuration, totalPremiumInBirr);
+        int coverLimit = (int) getCoverLimit(request.getCoverRequiredFor());
+
+        return new InsurancePremiumResponse(tripDuration, totalPremiumInBirr, coverLimit, request.getCoverRequiredFor());
     }
 
     private double applyAgeAdjustment(double premium, int age) {
 
         if (age >= 65 && age <= 80) {
-            System.out.println("age" + premium * 1.2);
+            System.out.println("age adjusted premium"+ " " + premium * 1.2);
 
             return premium * 1.2;
         }
@@ -126,11 +129,29 @@ public class InsurancePremiumService {
                 .orElseThrow(() -> new RuntimeException("No rate found for the given duration and coverage"));
     }
 
+    private double getCoverLimit(String coverRequiredFor) {
+        Map<String, Double> coverLimits = Map.ofEntries(
+                Map.entry("AfricaAsia", 15000.0),
+                Map.entry("Israel", 30000.0),
+                Map.entry("Schengen", 30000.0),
+                Map.entry("WorldWideBasic", 40000.0),
+                Map.entry("WorldWidePlus", 75000.0),
+                Map.entry("WorldWideExtra", 150000.0),
+                Map.entry("PilgrimageBasic", 10000.0),
+                Map.entry("PilgrimagePlus", 15000.0),
+                Map.entry("PilgrimageExtra", 25000.0),
+                Map.entry("StudentEurope", 30000.0),
+                Map.entry("StudentWorldWide", 100000.0)
+        );
+
+        return coverLimits.getOrDefault(coverRequiredFor, 0.0);
+    }
 
     private boolean isDurationWithinRange(int duration, String range) {
         String[] bounds = range.split("-");
         int min = Integer.parseInt(bounds[0]);
         int max = Integer.parseInt(bounds[1]);
         return duration >= min && duration <= max;
+
     }
 }

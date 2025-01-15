@@ -10,12 +10,14 @@ import java.time.LocalDate;
 @NoArgsConstructor
 @Builder
 public class DependentResponse {
-    private Long id;
+
+    private Long dependentId;
     private String firstName;
     private String lastName;
     private LocalDate dateOfBirth;
     private String relationship;
     private String passportNumber;
     private String chronicIllness;
+
 }
 

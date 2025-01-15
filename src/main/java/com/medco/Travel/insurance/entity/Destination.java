@@ -17,7 +17,7 @@ public class Destination {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long destinationId;
 
     private String countryName;
     private LocalDate startDate;
@@ -29,7 +29,7 @@ public class Destination {
     private String destinationAddress;
     private String phoneToDestination;
     private String coverRequiredFor;
-    private String chronicIllness;
+//    private String chronicIllness;
 
     @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<Policy> policies = new ArrayList<>();

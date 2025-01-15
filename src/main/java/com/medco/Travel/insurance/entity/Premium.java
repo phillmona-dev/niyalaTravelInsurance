@@ -17,7 +17,7 @@ public class Premium {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long premiumId;
 
     @ManyToOne
     private Passenger passenger;
@@ -33,7 +33,7 @@ public class Premium {
     private double coverLimit;
 
     @ManyToOne
-    @JoinColumn(name = "dependent_id")
+    @JoinColumn(name = "dependent_dependentId")
     private Dependent dependent;
 
 //    @Enumerated(EnumType.STRING)

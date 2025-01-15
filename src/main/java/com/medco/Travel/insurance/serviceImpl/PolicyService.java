@@ -38,7 +38,7 @@ public class PolicyService {
         Destination destination = destinationRepository.findById(destinationId)
                 .orElseThrow(() -> new RuntimeException("Destination not found"));
 
-        Premium premium = (Premium) premiumRepository.findByPassengerIdAndDestinationId(passengerId, destinationId)
+        Premium premium = (Premium) premiumRepository.findByPassenger_passengerIdAndDestination_destinationId(passengerId, destinationId)
                 .orElseThrow(() -> new RuntimeException("Premium not found for the given passenger and destination"));
 
         // Validate the trip duration
@@ -74,7 +74,9 @@ public class PolicyService {
     }
 
     public List<Policy> getPolicies() {
+
         return policyRepository.findAll();
+
     }
 
     // Method to get policies for a specific user

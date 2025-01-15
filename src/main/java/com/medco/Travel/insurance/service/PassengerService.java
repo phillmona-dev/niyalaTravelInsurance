@@ -1,6 +1,7 @@
 package com.medco.Travel.insurance.service;
 
 import com.medco.Travel.insurance.dto.Request.PassengerRequest;
+import com.medco.Travel.insurance.dto.Response.PassengerMyResponse;
 import com.medco.Travel.insurance.dto.Response.PassengerResponse;
 import com.medco.Travel.insurance.entity.Passenger;
 
@@ -16,5 +17,6 @@ public interface PassengerService {
 
     void deletePassenger(Long id);
 
-    PassengerResponse addPassenger(PassengerRequest passengerRequest);
+    PassengerMyResponse addPassenger(PassengerRequest passengerRequest);
+
 }

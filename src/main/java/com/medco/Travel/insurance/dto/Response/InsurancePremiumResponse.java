@@ -12,5 +12,7 @@ import lombok.Setter;
 public class InsurancePremiumResponse {
     private int tripDuration;
     private double totalPremium;
+    private int coverLimit;
+    private String coverRequiredFor;
 }
 

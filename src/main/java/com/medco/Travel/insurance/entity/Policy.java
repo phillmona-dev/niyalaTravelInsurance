@@ -19,7 +19,7 @@ public class Policy {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long policyId;
 
     private String policyNumber;
     private LocalDate startDate;
@@ -31,7 +31,7 @@ public class Policy {
     private List<Passenger> passengers = new ArrayList<>();
 
     @ManyToOne
-    @JoinColumn(name = "destination_id", nullable = false)
+    @JoinColumn(name = "destination_destinationId", nullable = false)
     private Destination destination;
 
 }

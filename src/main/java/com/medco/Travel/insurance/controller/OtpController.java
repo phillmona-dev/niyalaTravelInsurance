@@ -74,6 +74,5 @@ public class OtpController {
                     .body("An error occurred while verifying OTP: " + e.getMessage());
         }
     }
-
 }
 

@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
+import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
 
@@ -37,7 +38,7 @@ public class PremiumService {
             PassengerRepository passengerRepository,
             DestinationRepository destinationRepository,
             PremiumRepository premiumRepository,
-            MapfreNotifier mapfreNotifier, DestinationRepository directorRepository, DependentRepository dependentRepository) {
+            MapfreNotifier mapfreNotifier, DependentRepository dependentRepository) {
         this.passengerRepository = passengerRepository;
         this.destinationRepository = destinationRepository;
         this.premiumRepository = premiumRepository;
@@ -46,13 +47,14 @@ public class PremiumService {
         this.dependentRepository = dependentRepository;
     }
 
-    public PremiumResponse calculateAndSavePremium(Long passengerId, Long destinationId, LocalDate startDate, LocalDate endDate) {
+    public PremiumResponse calculateAndSavePremium(Long passengerId, Long destinationId) {
         Passenger passenger = passengerRepository.findById(passengerId)
                 .orElseThrow(() -> new RuntimeException("Passenger not found"));
         Destination destination = destinationRepository.findById(destinationId)
                 .orElseThrow(() -> new RuntimeException("Destination not found"));
 
-        int duration = Period.between(startDate, endDate).getDays() + 1;
+//        int duration = Period.between(startDate, endDate).getDays() + 1;
+        int duration = (int) (ChronoUnit.DAYS.between(destination.getStartDate(), destination.getEndDate()) + 1);
         if (duration <= 0) throw new RuntimeException("Invalid duration");
 
         double totalPremiumInEuro = 0.0;
@@ -69,18 +71,16 @@ public class PremiumService {
         Premium passengerPremium = new Premium();
         passengerPremium.setPassenger(passenger);
         passengerPremium.setDestination(destination);
-        passengerPremium.setStartDate(startDate);
-        passengerPremium.setEndDate(endDate);
-        passengerPremium.setPremiumAmount(adjustedEuroPremium); // Save in Euro
+        passengerPremium.setStartDate(destination.getStartDate());
+        passengerPremium.setEndDate(destination.getEndDate());
+        passengerPremium.setPremiumAmount(adjustedEuroPremium);
         passengerPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
         premiumRepository.save(passengerPremium);
 
-        // Log the main passenger's premium
-        System.out.println("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee  ");
         System.out.println("Main passenger premium in Euro: " + adjustedEuroPremium);
 
         // Fetch dependents and calculate their premiums
-        List<Dependent> dependents = dependentRepository.findByPassengerId(passengerId);
+        List<Dependent> dependents = dependentRepository.findByPassenger_passengerId(passengerId);
         for (Dependent dependent : dependents) {
             int dependentAge = calculateAge(dependent.getDateOfBirth());
             double dependentEuroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
@@ -93,19 +93,18 @@ public class PremiumService {
             dependentPremium.setPassenger(passenger);
             dependentPremium.setDependent(dependent);
             dependentPremium.setDestination(destination);
-            dependentPremium.setStartDate(startDate);
-            dependentPremium.setEndDate(endDate);
+            dependentPremium.setStartDate(destination.getStartDate());
+            dependentPremium.setEndDate(destination.getEndDate());
             dependentPremium.setPremiumAmount(dependentAdjustedEuroPremium);
             dependentPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
             premiumRepository.save(dependentPremium);
 
-            // Log each dependent's premium
             System.out.println("Dependent premium in Euro (" + dependent.getFirstName() + "): " + dependentAdjustedEuroPremium);
         }
 
-        // Convert total premium to Birr
         double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
 
+        totalPremiumInBirr = Math.round(totalPremiumInBirr*100.0)/100.0;
         System.out.println("Total premium in Euro (main passenger + dependents): " + totalPremiumInEuro);
         System.out.println("Total premium in Birr (main passenger + dependents): " + totalPremiumInBirr);
 
@@ -120,7 +119,6 @@ public class PremiumService {
         }
         return premium;
     }
-
 
     private int calculateAge(LocalDate dateOfBirth) {
         if (dateOfBirth == null) throw new RuntimeException("Passenger's date of birth is not set");
@@ -192,15 +190,18 @@ public class PremiumService {
     }
 
     private boolean isDurationInRange(int duration, String range) {
+
         String[] parts = range.split("-");
         int min = Integer.parseInt(parts[0]);
         int max = Integer.parseInt(parts[1]);
         return duration >= min && duration <= max;
+
     }
 
     private double getCoverLimit(String coverRequiredFor) {
         Map<String, Double> coverLimits = Map.ofEntries(
-                Map.entry("AfricaAsia", 15000.0),
+
+                Map.entry("Africa_Asia", 15000.0),
                 Map.entry("Israel", 30000.0),
                 Map.entry("Schengen", 30000.0),
                 Map.entry("WorldWideBasic", 40000.0),
@@ -211,6 +212,7 @@ public class PremiumService {
                 Map.entry("PilgrimageExtra", 25000.0),
                 Map.entry("StudentEurope", 30000.0),
                 Map.entry("StudentWorldWide", 100000.0)
+
         );
 
         return coverLimits.getOrDefault(coverRequiredFor, 0.0);
@@ -255,6 +257,7 @@ public class PremiumService {
 //        }
 
         return premiumResponseDTO;
+
     }
 
     public Premium updatePremium(Long id, Premium updatedPremium) {
@@ -273,9 +276,7 @@ public class PremiumService {
         Premium premium = premiumRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Premium not found"));
         premiumRepository.delete(premium);
-
     }
-
 }
 
 

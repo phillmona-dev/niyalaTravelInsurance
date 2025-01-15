@@ -99,9 +99,8 @@ public class WebSecurityConfig {
                                         "/api/travel/premium/**",
                                         "/api/travel/otp/**",
                                         "/api/travel/users/**",
-                                        "/api/payments/**",
-                                        "/api/insurance/**"
-
+                                        "/api/travel/payments/**",
+                                        "/api/travel/insurance/**"
 
                                 ).permitAll()
                                 .anyRequest().authenticated()

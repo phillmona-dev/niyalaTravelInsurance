@@ -18,7 +18,7 @@ import java.util.List;
 public class Passenger {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private Long id;
+    private Long passengerId;
 
     private String firstName;
     private String lastName;
@@ -34,13 +34,13 @@ public class Passenger {
     private String citizenship;
     private String fixedPhoneNumber;
     private String postalCode;
-
+    private String chronicIllness;
     @ManyToOne
-    @JoinColumn(name = "policy_id")
+    @JoinColumn(name = "policy_policyId")
     private Policy policy;
 
     @ManyToOne
-    @JoinColumn(name = "destination_id", nullable = false)
+    @JoinColumn(name = "destination_destinationId", nullable = true)
     private Destination destination;
 
     @OneToMany(mappedBy = "passenger", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
