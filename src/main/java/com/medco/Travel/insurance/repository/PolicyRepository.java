@@ -8,6 +8,7 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface PolicyRepository extends JpaRepository<Policy, Long> {
@@ -16,4 +17,6 @@ public interface PolicyRepository extends JpaRepository<Policy, Long> {
     List<Policy> findByPassengers(List<Passenger> passengers);
 
     List<Policy> findAllByStartDateBetween(LocalDate startDate, LocalDate endDate);
+
+   Optional<Policy> findByPolicyNumber(String policyNumber);
 }

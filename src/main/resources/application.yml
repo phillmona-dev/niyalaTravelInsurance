@@ -51,7 +51,7 @@ server:
 mapfre:
   api:
     key: dev-mapfre-api-key
-    url: http://localhost:8080/mock-mapfre/calculate-premium
+    url: http://localhost:8900/mock/mapfre
 
 # chapa API Configuration
 chapa:
@@ -67,4 +67,8 @@ afromessage:
 #    senderName:
 #    callbackUrl: http://192.168.100.82:8888/api/notifications/sms-status
 
-
+openai:
+  api:
+    key: "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"
+    url: https://api.openai.com/v1/chat/completions
+  model: gpt-3.5-turbo

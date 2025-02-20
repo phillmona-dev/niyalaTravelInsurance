@@ -26,7 +26,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     @Transactional
     public UserDetails loadUserByUsername(String email) throws UsernameNotFoundException {
 
-
         User user = userRepository.findByEmail(email);
         if (user==null) throw new EmailAlreadyExists("User Not Found with email: " + email);
 
@@ -34,6 +33,7 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
         privilegesForRole = privilegesForRole.stream().map(p -> "ROLE_" + p).collect(Collectors.toList());
         return UserDetailsImpl.build(user,privilegesForRole);
+
     }
 }
 

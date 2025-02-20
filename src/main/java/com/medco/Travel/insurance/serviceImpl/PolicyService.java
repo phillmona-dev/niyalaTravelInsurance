@@ -8,7 +8,7 @@ import org.springframework.stereotype.Service;
 import java.time.LocalDate;
 import java.time.Period;
 import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -23,8 +23,6 @@ public class PolicyService {
     @Autowired
     private DestinationRepository destinationRepository;
 
-//    @Autowired
-//    private MapfreApiClient mapfreApiClient;
     @Autowired
     private PassengerRepository passengerRepository;
     @Autowired
@@ -38,10 +36,10 @@ public class PolicyService {
         Destination destination = destinationRepository.findById(destinationId)
                 .orElseThrow(() -> new RuntimeException("Destination not found"));
 
-        Premium premium = (Premium) premiumRepository.findByPassenger_passengerIdAndDestination_destinationId(passengerId, destinationId)
+        // Fetch the first available premium and unwrap the Optional
+        Premium premium = (Premium) premiumRepository.findFirstByPassenger_passengerIdAndDestination_destinationId(passengerId, destinationId)
                 .orElseThrow(() -> new RuntimeException("Premium not found for the given passenger and destination"));
 
-        // Validate the trip duration
         int duration = Period.between(startDate, endDate).getDays();
         if (duration <= 0) {
             throw new IllegalArgumentException("End date must be after start date.");
@@ -56,9 +54,7 @@ public class PolicyService {
         policy.setDestination(destination);
 
         // Associate the passenger with the policy
-        List<Passenger> passengers = new ArrayList<>();
-        passengers.add(passenger);
-        policy.setPassengers(passengers);
+        policy.setPassengers(Collections.singletonList(passenger));
 
         return policyRepository.save(policy);
     }

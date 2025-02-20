@@ -100,7 +100,9 @@ public class WebSecurityConfig {
                                         "/api/travel/otp/**",
                                         "/api/travel/users/**",
                                         "/api/travel/payments/**",
-                                        "/api/travel/insurance/**"
+                                        "/api/travel/insurance/**",
+                                        "/mock/mapfre/**",
+                                        "/api/chatbot/**"
 
                                 ).permitAll()
                                 .anyRequest().authenticated()

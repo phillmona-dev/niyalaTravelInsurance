@@ -18,5 +18,4 @@ public class RoleResponse {
     private String roleUuid;
     private List<PrivilegeResponse> privileges;
 
-
 }

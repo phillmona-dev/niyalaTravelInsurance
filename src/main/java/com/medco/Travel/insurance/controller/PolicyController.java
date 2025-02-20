@@ -23,7 +23,9 @@ public class PolicyController {
 
     @GetMapping("/getAll")
     public List<Policy> getAllPolicies() {
+
         return policyService.getPolicies();
+
     }
 
     @GetMapping("/getByUser/{passengerId}")

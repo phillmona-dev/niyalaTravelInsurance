@@ -27,6 +27,6 @@ public class ReportService {
     }
 
     public List<Claim> generateClaimReport(Long policyId, LocalDate startDate, LocalDate endDate) {
-        return claimRepository.findAllByPolicyIdAndDateFiledBetween(policyId, startDate, endDate);
+        return claimRepository.findAllByPolicyPolicyIdAndSubscriptionDateBetween(policyId, startDate, endDate);
     }
 }

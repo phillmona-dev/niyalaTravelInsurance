@@ -8,7 +8,9 @@ import java.util.Optional;
 
 @Repository
 public interface PremiumRepository extends JpaRepository<Premium, Long> {
-    Optional<Object> findByPassenger_passengerIdAndDestination_destinationId(Long passengerId, Long destinationId);
+//    Optional<Object> findByPassenger_passengerIdAndDestination_destinationId(Long passengerId, Long destinationId);
+
+    Optional<Object> findFirstByPassenger_passengerIdAndDestination_destinationId(Long passengerId, Long destinationId);
 }
 
 

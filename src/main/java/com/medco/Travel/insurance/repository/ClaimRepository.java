@@ -6,9 +6,13 @@ import org.springframework.stereotype.Repository;
 
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Optional;
 
 @Repository
 public interface ClaimRepository extends JpaRepository<Claim, Long> {
-    List<Claim> findAllByPolicyIdAndDateFiledBetween(Long policyId, LocalDate startDate, LocalDate endDate);
+    List<Claim> findAllByPolicyPolicyIdAndSubscriptionDateBetween(Long policyId, LocalDate startDate, LocalDate endDate);
 
+    List<Claim> findByPolicyPolicyNumber(String policyNumber);
+
+    Optional<Object> findByTelephoneNumber(String phoneNumber);
 }
