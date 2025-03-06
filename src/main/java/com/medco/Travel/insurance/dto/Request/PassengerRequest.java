@@ -28,6 +28,8 @@ public class PassengerRequest {
     private String postalCode;
     private String chronicIllness;
 
+    private String referenceCode;
+
     private DestinationRequest destination;
     private List<DependentRequest> dependents;
 }

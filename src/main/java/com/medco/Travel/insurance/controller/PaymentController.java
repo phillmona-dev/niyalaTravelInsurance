@@ -2,6 +2,8 @@ package com.medco.Travel.insurance.controller;
 
 import com.medco.Travel.insurance.dto.Request.ChapaPaymentRequest;
 import com.medco.Travel.insurance.dto.Response.ChapaPaymentResponse;
+import com.medco.Travel.insurance.entity.InsurancePremium;
+import com.medco.Travel.insurance.repository.InsurancePremiumRepository;
 import com.medco.Travel.insurance.serviceImpl.ChapaPaymentService;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -16,20 +18,29 @@ import java.util.Map;
 public class PaymentController {
 
     private final ChapaPaymentService paymentService;
+    private final InsurancePremiumRepository insurancePremiumRepository;
 
-    public PaymentController(ChapaPaymentService paymentService) {
+    public PaymentController(ChapaPaymentService paymentService, InsurancePremiumRepository insurancePremiumRepository) {
 
         this.paymentService = paymentService;
+        this.insurancePremiumRepository = insurancePremiumRepository;
     }
 
-    @PostMapping("/initiate")
-    public ResponseEntity<ChapaPaymentResponse> initiatePayment(@RequestBody ChapaPaymentRequest paymentRequest) throws IOException {
+    @PostMapping("/initiate/{referenceCode}")
+    public ResponseEntity<ChapaPaymentResponse> initiatePayment(@PathVariable String referenceCode) throws IOException {
+        // Fetch premium using referenceCode
+        InsurancePremium premium = insurancePremiumRepository.findUnpaidPremiumByReferenceCode(referenceCode)
+                .orElseThrow(() -> new RuntimeException("No unpaid premium found for reference code: " + referenceCode));
+
+        ChapaPaymentRequest paymentRequest = paymentService.createPaymentRequest(premium);
         paymentRequest.setCallbackUrl("http://192.168.100.82:8900/api/payments/callback");
         paymentRequest.setReturnUrl("http://192.168.100.82:8900/api/payments/payment-success");
-        paymentRequest.setTxRef("unique-tx-ref-" + System.currentTimeMillis());
+        paymentRequest.setTxRef(referenceCode);
+
         ChapaPaymentResponse response = paymentService.initiatePayment(paymentRequest);
         return ResponseEntity.ok(response);
     }
+
 
     @PostMapping("/callback")
     public ResponseEntity<String> handleCallback(@RequestBody String callbackData) throws IOException {

@@ -57,7 +57,7 @@ mapfre:
 chapa:
   api:
     base-url: https://api.chapa.co/v1/transaction/initialize
-    key: CHASECK_TEST-IHCoV5WRDK4phVR2g2tqLGIqzCIKfwT5
+    key: CHASECK_TEST-n4BnVZS3FuFT6gVcqy3CN5rB2DhtGMzn
 
 afromessage:
   api:

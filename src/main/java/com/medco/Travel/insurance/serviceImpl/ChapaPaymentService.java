@@ -3,8 +3,12 @@ package com.medco.Travel.insurance.serviceImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.medco.Travel.insurance.dto.Request.ChapaPaymentRequest;
 import com.medco.Travel.insurance.dto.Response.ChapaPaymentResponse;
+import com.medco.Travel.insurance.entity.InsurancePremium;
+import com.medco.Travel.insurance.entity.Passenger;
 import com.medco.Travel.insurance.entity.PaymentTransaction;
+import com.medco.Travel.insurance.repository.InsurancePremiumRepository;
 import com.medco.Travel.insurance.repository.PaymentTransactionRepository;
+import com.medco.Travel.insurance.repository.PremiumRepository;
 import okhttp3.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -13,6 +17,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import java.io.IOException;
+import java.time.LocalDateTime;
+import java.util.Optional;
 
 @Service
 public class ChapaPaymentService {
@@ -27,28 +33,21 @@ public class ChapaPaymentService {
     private final OkHttpClient client;
 
     private final PaymentTransactionRepository paymentTransactionRepository;
+    private final PremiumRepository premiumRepository;
+    private final InsurancePremiumRepository insurancePremiumRepository;
 
-    public ChapaPaymentService(PaymentTransactionRepository paymentTransactionRepository) {
+    public ChapaPaymentService(PaymentTransactionRepository paymentTransactionRepository, PremiumRepository premiumRepository, InsurancePremiumRepository insurancePremiumRepository) {
         this.paymentTransactionRepository = paymentTransactionRepository;
+        this.premiumRepository = premiumRepository;
+        this.insurancePremiumRepository = insurancePremiumRepository;
         this.client = new OkHttpClient();
     }
 
     public ChapaPaymentResponse initiatePayment(ChapaPaymentRequest request) throws IOException {
         MediaType mediaType = MediaType.parse("application/json");
-        String jsonBody = "{"
-                + "\"amount\":\"" + request.getAmount() + "\","
-                + "\"currency\":\"" + request.getCurrency() + "\","
-                + "\"email\":\"" + request.getEmail() + "\","
-                + "\"first_name\":\"" + request.getFirstName() + "\","
-                + "\"last_name\":\"" + request.getLastName() + "\","
-                + "\"phone_number\":\"" + request.getPhoneNumber() + "\","
-                + "\"tx_ref\":\"" + request.getTxRef() + "\","
-                + "\"callback_url\":\"" + request.getCallbackUrl() + "\","
-                + "\"return_url\":\"" + request.getReturnUrl() + "\","
-                + "\"customization[title]\":\"" + request.getTitle() + "\","
-                + "\"customization[description]\":\"" + request.getDescription() + "\","
-                + "\"meta[hide_receipt]\":\"" + request.isHideReceipt() + "\""
-                + "}";
+
+        // Convert request to JSON format
+        String jsonBody = new ObjectMapper().writeValueAsString(request);
 
         RequestBody body = RequestBody.create(mediaType, jsonBody);
 
@@ -60,13 +59,19 @@ public class ChapaPaymentService {
                 .build();
 
         try (Response response = client.newCall(requestObj).execute()) {
-            if (response.isSuccessful()) {
+            if (response.isSuccessful() && response.body() != null) {
                 String responseBody = response.body().string();
-                System.out.println("response from chapa" + " " + responseBody);
-                return parseResponse(responseBody);
+                System.out.println("response body: ooooooooooooooooooooo: " + responseBody);
+                logger.info("Payment initiated successfully: {}", responseBody);
+
+              ChapaPaymentResponse paymentResponse = parseResponse(responseBody);
+              paymentResponse.setStatus("PENDING");
+              savePaymentTransaction(paymentResponse, request);
+              return paymentResponse;
             } else {
+                String errorMessage = response.body() != null ? response.body().string() : "No response body";
                 logger.error("Failed to initiate payment: HTTP Status Code: {}, Response Message: {}, Response Body: {}",
-                        response.code(), response.message(), response.body().string());
+                        response.code(), response.message(), errorMessage);
                 throw new RuntimeException("Failed to initiate payment: " + response.message());
             }
         } catch (IOException e) {
@@ -75,18 +80,35 @@ public class ChapaPaymentService {
         }
     }
 
-    private void savePaymentTransaction(ChapaPaymentResponse paymentResponse) {
+
+    private void savePaymentTransaction(ChapaPaymentResponse paymentResponse, ChapaPaymentRequest request) {
 
         PaymentTransaction transaction = new PaymentTransaction();
-
         try {
 
-            BeanUtils.copyProperties(transaction, paymentResponse.getData());
+            if (paymentResponse.getData()==null){
+                throw new RuntimeException("Payment data is null. cannot save transactions.");
+            }
 
-            transaction.setTxRef(paymentResponse.getTxRef());
-            transaction.setStatus(paymentResponse.getStatus());
-            transaction.setCheckoutUrl(paymentResponse.getData().getCheckoutUrl());
+//            Optional<InsurancePremium> insurancePremiumOpt = insurancePremiumRepository.findByReferenceCode(paymentResponse.getTxRef());
+//            System.out.println("insurancePremium mmmmmmmmm" + insurancePremiumOpt);
+//            if (insurancePremiumOpt.isEmpty()){
+//                throw new RuntimeException("No insurance premium found for txRef" + " " + paymentResponse.getTxRef());
+//            }
+//            InsurancePremium insurancePremium = insurancePremiumOpt.get();
+//            transaction.setInsurancePremium(insurancePremium);
+          BeanUtils.copyProperties(transaction, paymentResponse.getData());
+
+            transaction.setTxRef(request.getTxRef());
+            transaction.setStatus(paymentResponse.getStatus() != null ? paymentResponse.getStatus() : "PENDING");
+//            transaction.setCheckoutUrl(paymentResponse.getData().getCheckoutUrl());
             transaction.setPaymentGatewayResponse(paymentResponse.getMessage());
+            transaction.setAmount(String.valueOf(request.getAmount()));
+            transaction.setCurrency(request.getCurrency());
+            transaction.setCreatedAt(LocalDateTime.now());
+            transaction.setEmail(request.getEmail());
+            transaction.setFirstName(request.getFirstName());
+            transaction.setLastName(request.getLastName());
 
             paymentTransactionRepository.save(transaction);
 
@@ -133,6 +155,28 @@ public class ChapaPaymentService {
             throw new RuntimeException("Error occurred while parsing the payment response", e);
         }
     }
+
+    public ChapaPaymentRequest createPaymentRequest(InsurancePremium premium) {
+        // Retrieve the passenger associated with the premium
+        Passenger passenger = premium.getPassenger();
+
+        return ChapaPaymentRequest.builder()
+                .amount(premium.getPremiumAmount())
+                .currency("ETB")
+                .email(passenger.getEmail())
+                .firstName(passenger.getFirstName())
+                .lastName(passenger.getLastName())
+                .phoneNumber(passenger.getTelephone())
+                .txRef("tx-" + premium.getReferenceCode() + "-" + System.currentTimeMillis())  // Unique transaction reference
+                .callbackUrl("http://192.168.100.82:8900/api/payments/callback")
+                .returnUrl("http://192.168.100.82:8900/api/payments/payment-success")
+                .title("Insurance Payment")
+                .description("Payment for Travel Insurance Premium")
+                .hideReceipt(false)
+                .build();
+    }
+
+
 }
 
 

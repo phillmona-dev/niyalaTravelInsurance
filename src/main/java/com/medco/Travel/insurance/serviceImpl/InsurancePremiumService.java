@@ -3,11 +3,15 @@ package com.medco.Travel.insurance.serviceImpl;
 import com.medco.Travel.insurance.dto.Request.InsurancePremiumRequest;
 import com.medco.Travel.insurance.dto.Response.InsurancePremiumResponse;
 
+import com.medco.Travel.insurance.entity.InsurancePremium;
+import com.medco.Travel.insurance.repository.InsurancePremiumRepository;
+import com.medco.Travel.insurance.repository.PremiumRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
 import java.time.temporal.ChronoUnit;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class InsurancePremiumService {
@@ -16,11 +20,16 @@ public class InsurancePremiumService {
     private ExchangeRateService exchangeRateService;
     @Autowired
     private PremiumService premiumService;
+    @Autowired
+    private PremiumRepository premiumRepository;
+    @Autowired
+    private InsurancePremiumRepository insurancePremiumRepository;
 
     public InsurancePremiumResponse calculatePremium(InsurancePremiumRequest request) {
-//        int tripDuration = Period.between(request.getStartDate(), request.getEndDate()).getDays() + 1;
-        int tripDuration = (int) (ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate())+1);
-        System.out.println("trip duration: " + tripDuration);
+
+        int tripDuration = (int) (ChronoUnit.DAYS.between(request.getStartDate(), request.getEndDate()) + 1);
+        System.out.println("Trip duration: " + tripDuration);
+
         if (tripDuration <= 0) {
             throw new IllegalArgumentException("End date must be after start date.");
         }
@@ -29,6 +38,7 @@ public class InsurancePremiumService {
         double exchangeRate = exchangeRateService.getEuroToBirrRate();
         System.out.println("Exchange Rate (Euro to Birr): " + exchangeRate);
 
+        // Loop through all travelers to calculate the premium for each
         for (int i = 0; i < request.getNumberOfTravelers(); i++) {
             int age = request.getTravelerAges().get(i);
             double euroPremium = calculatePremiumInEuro(request.getCoverRequiredFor(), tripDuration);
@@ -38,19 +48,51 @@ public class InsurancePremiumService {
             System.out.println("Traveler " + (i + 1) + ": Adjusted Euro Premium = " + adjustedEuroPremium);
 
             totalPremiumInEuro += adjustedEuroPremium;
-
         }
 
         System.out.println("Total Premium in Euro (before conversion): " + totalPremiumInEuro);
 
+        // Convert the total premium to Birr
         double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
-        totalPremiumInBirr = Math.round(totalPremiumInBirr*100.0)/100.0;
+        totalPremiumInBirr = Math.round(totalPremiumInBirr * 100.0) / 100.0;
         System.out.println("Total Premium in Birr (after conversion): " + totalPremiumInBirr);
 
+        // Determine the coverage limit based on the type of coverage
         int coverLimit = (int) getCoverLimit(request.getCoverRequiredFor());
 
-        return new InsurancePremiumResponse(tripDuration, totalPremiumInBirr, coverLimit, request.getCoverRequiredFor());
+        // Generate a unique reference code for the premium
+        String referenceCode = UUID.randomUUID().toString();
+
+        // Save the premium details in the database
+        InsurancePremium premium = new InsurancePremium();
+
+        premium.setCoverRequiredFor(request.getCoverRequiredFor());
+        premium.setStartDate(request.getStartDate());
+        premium.setEndDate(request.getEndDate());
+        premium.setNumberOfTravelers(request.getNumberOfTravelers());
+        premium.setPremiumAmount(totalPremiumInBirr);
+        premium.setCoverLimit(coverLimit);
+        premium.setReferenceCode(referenceCode);
+        premium.setTripDuration(tripDuration);
+
+        insurancePremiumRepository.save(premium);
+
+        // Return the InsurancePremiumResponse with all necessary details
+        return new InsurancePremiumResponse(
+                premium.getId(),
+                premium.getCoverRequiredFor(),
+                premium.getStartDate(),
+                premium.getEndDate(),
+                premium.getNumberOfTravelers(),
+                request.getTravelerAges(),
+                premium.getPremiumAmount(),
+                premium.getCoverLimit(),
+                premium.getReferenceCode(),
+                premium.isPaid(),
+                premium.getTripDuration()
+        );
     }
+
 
     private double applyAgeAdjustment(double premium, int age) {
 
@@ -67,7 +109,7 @@ public class InsurancePremiumService {
 
     private double calculatePremiumInEuro(String coverRequiredFor, int duration) {
         Map<String, Map<String, Double>> premiumRates = Map.ofEntries(
-                Map.entry("AfricaAsia", Map.ofEntries(
+                Map.entry("Africa_Asia", Map.ofEntries(
                         Map.entry("1-4", 6.92), Map.entry("5-7", 7.39), Map.entry("8-10", 7.77),
                         Map.entry("11-15", 8.39), Map.entry("16-21", 9.49), Map.entry("22-30", 16.72),
                         Map.entry("31-60", 31.05), Map.entry("61-90", 43.00), Map.entry("91-180", 65.10),
@@ -131,7 +173,7 @@ public class InsurancePremiumService {
 
     private double getCoverLimit(String coverRequiredFor) {
         Map<String, Double> coverLimits = Map.ofEntries(
-                Map.entry("AfricaAsia", 15000.0),
+                Map.entry("Africa_Asia", 15000.0),
                 Map.entry("Israel", 30000.0),
                 Map.entry("Schengen", 30000.0),
                 Map.entry("WorldWideBasic", 40000.0),

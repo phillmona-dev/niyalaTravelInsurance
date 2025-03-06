@@ -46,6 +46,11 @@ public class Passenger {
     @OneToMany(mappedBy = "passenger", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JsonIgnore
     private List<Dependent> dependents;
+
+
+    @OneToOne
+    @JoinColumn(name = "premium_id", nullable = false)
+    private InsurancePremium insurancePremium;
 //    @ManyToOne
 //    @JoinColumn(name = "user_id", nullable = false)
 //    private User user;

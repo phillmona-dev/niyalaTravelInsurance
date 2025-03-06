@@ -19,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/travel/claims")
 public class ClaimController {
+
     private final ClaimService claimService;
 
     @PostMapping("/submitClaim")
@@ -52,4 +53,5 @@ public class ClaimController {
             ){
         return ResponseEntity.ok(claimService.updateClaimStatus(id, status, rejectionReason));
     }
+
 }

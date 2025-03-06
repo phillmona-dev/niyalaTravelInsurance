@@ -16,4 +16,8 @@ public class PassengerMyResponse {
     private Long destinationId;
     private LocalDate startDate;
     private LocalDate endDate;
+    private double premiumAmount;
+
+    private String referenceCode;
+
 }

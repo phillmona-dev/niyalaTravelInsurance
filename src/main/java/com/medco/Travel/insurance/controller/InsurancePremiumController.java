@@ -25,5 +25,6 @@ public class InsurancePremiumController {
         InsurancePremiumResponse response = insurancePremiumService.calculatePremium(request);
         return ResponseEntity.ok(response);
     }
+
 }
 

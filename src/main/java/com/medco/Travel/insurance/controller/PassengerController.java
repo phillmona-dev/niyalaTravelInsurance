@@ -26,7 +26,6 @@ public class PassengerController {
         return new ResponseEntity<>(passengerResponse, HttpStatus.CREATED);
     }
 
-
     @GetMapping("/{id}")
     public PassengerResponse getPassengerById(@PathVariable Long id) {
 

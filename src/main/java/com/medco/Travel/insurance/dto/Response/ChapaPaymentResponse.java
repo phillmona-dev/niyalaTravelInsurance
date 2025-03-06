@@ -13,7 +13,6 @@ import lombok.*;
 public class ChapaPaymentResponse {
     private String message;
     private String status;
-    private String txRef;
     private Data data;
 }
 

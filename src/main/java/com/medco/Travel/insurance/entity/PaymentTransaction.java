@@ -23,23 +23,15 @@ public class PaymentTransaction {
     @Column(nullable = false)
     private String amount;
 
-    @Column(nullable = false)
     private String currency;
-
-    @Column(nullable = false)
     private String email;
 
-    @Column(nullable = false)
     private String firstName;
-
-    @Column(nullable = false)
     private String lastName;
-
-    @Column(nullable = false)
     private String status; // e.g., PENDING, SUCCESS, FAILED
 
-    @Column(nullable = false)
-    private String checkoutUrl;
+//    @Column(nullable = true)
+//    private String checkoutUrl;
 
     private String paymentGatewayResponse; // Store response from Chapa for reference
 
@@ -47,5 +39,13 @@ public class PaymentTransaction {
     private LocalDateTime createdAt = LocalDateTime.now();
 
     private LocalDateTime updatedAt;
+
+//    @ManyToOne
+//    @JoinColumn(name = "insurance_premium_id", nullable = false)
+//    private InsurancePremium insurancePremium;
+//
+//    public String getAmount() {
+//        return insurancePremium != null ? String.valueOf(insurancePremium.getPremiumAmount()) : "0.0";
+//    }
 }
 

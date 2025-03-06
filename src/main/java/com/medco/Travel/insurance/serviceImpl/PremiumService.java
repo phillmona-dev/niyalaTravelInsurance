@@ -127,7 +127,7 @@ public class PremiumService {
 
     private double calculatePremiumInEuro(String coverRequiredFor, int duration) {
         Map<String, Map<String, Double>> premiumRates = Map.ofEntries(
-                Map.entry("AfricaAsia", Map.ofEntries(
+                Map.entry("Africa_Asia", Map.ofEntries(
                         Map.entry("1-4", 6.92), Map.entry("5-7", 7.39), Map.entry("8-10", 7.77),
                         Map.entry("11-15", 8.39), Map.entry("16-21", 9.49), Map.entry("22-30", 16.72),
                         Map.entry("31-60", 31.05), Map.entry("61-90", 43.00), Map.entry("91-180", 65.10),

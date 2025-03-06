@@ -7,11 +7,13 @@ import com.medco.Travel.insurance.dto.Response.PassengerMyResponse;
 import com.medco.Travel.insurance.dto.Response.PassengerResponse;
 import com.medco.Travel.insurance.entity.Dependent;
 import com.medco.Travel.insurance.entity.Destination;
+import com.medco.Travel.insurance.entity.InsurancePremium;
 import com.medco.Travel.insurance.entity.Passenger;
 import com.medco.Travel.insurance.exception.ResourceNotFoundException;
 import com.medco.Travel.insurance.repository.DependentRepository;
 import com.medco.Travel.insurance.repository.DestinationRepository;
 import com.medco.Travel.insurance.repository.PassengerRepository;
+import com.medco.Travel.insurance.repository.InsurancePremiumRepository;
 import com.medco.Travel.insurance.service.PassengerService;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -19,7 +21,6 @@ import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.time.Period;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -35,15 +36,26 @@ public class PassengerServiceImpl implements PassengerService {
     @Autowired
     private DestinationRepository destinationRepository;
 
+    @Autowired
+    private InsurancePremiumRepository insurancePremiumRepository;
+
     @Override
     public PassengerMyResponse addPassenger(PassengerRequest passengerRequest) {
+        // Fetch the stored premium using referenceCode
+        InsurancePremium premium = insurancePremiumRepository.findByReferenceCode(passengerRequest.getReferenceCode())
+                .orElseThrow(() -> new IllegalArgumentException("Invalid reference code: Premium not found."));
+
+        // Ensure the passenger is charged the exact stored premium
+        if (premium.isPaid()) {
+            throw new IllegalStateException("Premium already paid for this reference code.");
+        }
+
         // Extract DestinationRequest from PassengerRequest
         DestinationRequest destinationRequest = passengerRequest.getDestination();
 
-        // Check if a matching Destination exists (based on unique fields like PhoneToDestination)
+        // Check if a matching Destination exists, or create a new one
         Destination destination = destinationRepository.findByPhoneToDestination(destinationRequest.getPhoneToDestination())
                 .orElseGet(() -> {
-                    // Create and save a new Destination if it doesn't exist
                     Destination newDestination = new Destination();
                     BeanUtils.copyProperties(destinationRequest, newDestination);
                     return destinationRepository.save(newDestination);
@@ -54,6 +66,7 @@ public class PassengerServiceImpl implements PassengerService {
         BeanUtils.copyProperties(passengerRequest, passenger);
         passenger.setAge(Period.between(passengerRequest.getDateOfBirth(), LocalDate.now()).getYears());
         passenger.setDestination(destination);
+        passenger.setInsurancePremium(premium); // Link premium to passenger
 
         // Map Dependents if present
         if (passengerRequest.getDependents() != null && !passengerRequest.getDependents().isEmpty()) {
@@ -68,19 +81,26 @@ public class PassengerServiceImpl implements PassengerService {
             passenger.setDependents(dependents);
         }
 
-        // Save Passenger and fetch the saved instance
+        // Save Passenger
         Passenger savedPassenger = passengerRepository.save(passenger);
 
-        // Create PassengerResponse with only the required fields
+        // Update the premium with the registered passenger
+        premium.setPassenger(savedPassenger);
+        insurancePremiumRepository.save(premium); // Ensure passenger is linked in premium
+
+        // Return response with required fields
         PassengerMyResponse passengerResponse = new PassengerMyResponse();
         passengerResponse.setPassengerId(savedPassenger.getPassengerId());
         passengerResponse.setDestinationId(savedPassenger.getDestination().getDestinationId());
         passengerResponse.setStartDate(savedPassenger.getDestination().getStartDate());
         passengerResponse.setEndDate(savedPassenger.getDestination().getEndDate());
+        passengerResponse.setPremiumAmount(premium.getPremiumAmount());
+        passengerResponse.setReferenceCode(premium.getReferenceCode());
 
         return passengerResponse;
-
     }
+
+
 
     @Override
     public PassengerResponse getPassengerById(Long id) {
