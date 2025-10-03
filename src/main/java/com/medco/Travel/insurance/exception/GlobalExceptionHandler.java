@@ -75,9 +75,9 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<?> handleOtherExceptions(Exception ex) {
+        logger.error("Unexpected error occurred", ex);
         String errorMessage = "An unexpected error occurred: " + ex.getMessage();
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(errorMessage);
     }
 
 }
-

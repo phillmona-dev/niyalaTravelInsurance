@@ -38,6 +38,15 @@ public class InsurancePremiumService {
         double exchangeRate = exchangeRateService.getEuroToBirrRate();
         System.out.println("Exchange Rate (Euro to Birr): " + exchangeRate);
 
+        //TODO: to be comment out
+        //TEST: If we should force 1 birr for Africa_Asia
+        String coverRequiredFor = request.getCoverRequiredFor();
+        boolean forceOneBirr = "Africa_Asia".equals(coverRequiredFor);
+
+        // DEBUG: Print the actual value to see what's happening
+        System.out.println("DEBUG: coverRequiredFor = '" + coverRequiredFor + "'");
+        System.out.println("DEBUG: forceOneBirr = " + forceOneBirr);
+
         // Loop through all travelers to calculate the premium for each
         for (int i = 0; i < request.getNumberOfTravelers(); i++) {
             int age = request.getTravelerAges().get(i);
@@ -46,6 +55,18 @@ public class InsurancePremiumService {
 
             double adjustedEuroPremium = applyAgeAdjustment(euroPremium, age);
             System.out.println("Traveler " + (i + 1) + ": Adjusted Euro Premium = " + adjustedEuroPremium);
+
+            //TODO: to be comment out
+            // TEST: Override premium for Africa_Asia - first traveler gets 1 Birr equivalent, rest get 0
+            if (forceOneBirr) {
+                if (i == 0) {
+                    adjustedEuroPremium = 1.00 / exchangeRate; // First traveler: 1 Birr equivalent in Euro
+                    System.out.println("DEBUG: Overriding Traveler 1 premium to 1 Birr equivalent in Euro: " + adjustedEuroPremium);
+                } else {
+                    adjustedEuroPremium = 0.0; // Other travelers: 0 to maintain total of 1 Birr
+                    System.out.println("DEBUG: Setting Traveler " + (i + 1) + " premium to 0");
+                }
+            }
 
             totalPremiumInEuro += adjustedEuroPremium;
         }
@@ -56,6 +77,13 @@ public class InsurancePremiumService {
         double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
         totalPremiumInBirr = Math.round(totalPremiumInBirr * 100.0) / 100.0;
         System.out.println("Total Premium in Birr (after conversion): " + totalPremiumInBirr);
+
+        //TODO: to be comment out
+        // TEST: Final override to ensure exactly 1 Birr for Africa_Asia
+        if (forceOneBirr) {
+            totalPremiumInBirr = 1.0;
+            System.out.println("DEBUG: Final override - setting totalPremiumInBirr to 1.0");
+        }
 
         // Determine the coverage limit based on the type of coverage
         int coverLimit = (int) getCoverLimit(request.getCoverRequiredFor());

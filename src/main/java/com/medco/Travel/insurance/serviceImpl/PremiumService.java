@@ -1,14 +1,8 @@
 package com.medco.Travel.insurance.serviceImpl;
 
 import com.medco.Travel.insurance.dto.Response.*;
-import com.medco.Travel.insurance.entity.Dependent;
-import com.medco.Travel.insurance.entity.Destination;
-import com.medco.Travel.insurance.entity.Passenger;
-import com.medco.Travel.insurance.entity.Premium;
-import com.medco.Travel.insurance.repository.DependentRepository;
-import com.medco.Travel.insurance.repository.DestinationRepository;
-import com.medco.Travel.insurance.repository.PassengerRepository;
-import com.medco.Travel.insurance.repository.PremiumRepository;
+import com.medco.Travel.insurance.entity.*;
+import com.medco.Travel.insurance.repository.*;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
@@ -18,6 +12,7 @@ import java.time.Period;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Map;
+import java.util.UUID;
 
 @Service
 public class PremiumService {
@@ -29,6 +24,7 @@ public class PremiumService {
     private final PremiumRepository premiumRepository;
     private final MapfreNotifier mapfreNotifier;
     private final DependentRepository dependentRepository;
+    private final InsurancePremiumRepository insurancePremiumRepository;
 
     @Autowired
     private ExchangeRateService exchangeRateService;
@@ -38,78 +34,220 @@ public class PremiumService {
             PassengerRepository passengerRepository,
             DestinationRepository destinationRepository,
             PremiumRepository premiumRepository,
-            MapfreNotifier mapfreNotifier, DependentRepository dependentRepository) {
+            MapfreNotifier mapfreNotifier, DependentRepository dependentRepository, InsurancePremiumRepository insurancePremiumRepository) {
         this.passengerRepository = passengerRepository;
         this.destinationRepository = destinationRepository;
         this.premiumRepository = premiumRepository;
         this.mapfreNotifier = mapfreNotifier;
 
         this.dependentRepository = dependentRepository;
+        this.insurancePremiumRepository = insurancePremiumRepository;
     }
 
-    public PremiumResponse calculateAndSavePremium(Long passengerId, Long destinationId) {
-        Passenger passenger = passengerRepository.findById(passengerId)
-                .orElseThrow(() -> new RuntimeException("Passenger not found"));
-        Destination destination = destinationRepository.findById(destinationId)
-                .orElseThrow(() -> new RuntimeException("Destination not found"));
+//    public PremiumResponse calculateAndSavePremium(Long passengerId, Long destinationId) {
+//        Passenger passenger = passengerRepository.findById(passengerId)
+//                .orElseThrow(() -> new RuntimeException("Passenger not found"));
+//        Destination destination = destinationRepository.findById(destinationId)
+//                .orElseThrow(() -> new RuntimeException("Destination not found"));
+//
+////        int duration = Period.between(startDate, endDate).getDays() + 1;
+//        int duration = (int) (ChronoUnit.DAYS.between(destination.getStartDate(), destination.getEndDate()) + 1);
+//        if (duration <= 0) throw new RuntimeException("Invalid duration");
+//
+//        double totalPremiumInEuro = 0.0;
+//        double exchangeRate = exchangeRateService.getEuroToBirrRate();
+//
+//        //TODO: to be comment out
+//        //TEST: If we should force 1 birr for Africa_Asia
+//        boolean forceOneBirr = "Africa_Asia".equals(destination.getCoverRequiredFor());
+//
+//        // Calculate premium for the main passenger
+//        double euroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
+//        int passengerAge = calculateAge(passenger.getDateOfBirth());
+//        double adjustedEuroPremium = applyAgeBasedAdjustment(euroPremium, passengerAge);
+//
+//        //TODO: to be comment out
+//        //Test: Override premium to equivalent of 1 birr for Africa_Asia
+//        if (forceOneBirr){
+//            adjustedEuroPremium = 1.00 / exchangeRate;
+//        }
+//
+//        totalPremiumInEuro += adjustedEuroPremium;
+//
+//        // Save premium for the main passenger
+//        Premium passengerPremium = new Premium();
+//        passengerPremium.setPassenger(passenger);
+//        passengerPremium.setDestination(destination);
+//        passengerPremium.setStartDate(destination.getStartDate());
+//        passengerPremium.setEndDate(destination.getEndDate());
+//        passengerPremium.setPremiumAmount(adjustedEuroPremium);
+//        passengerPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
+//        premiumRepository.save(passengerPremium);
+//
+//        System.out.println("Main passenger premium in Euro: " + adjustedEuroPremium);
+//
+//        // Fetch dependents and calculate their premiums
+//        List<Dependent> dependents = dependentRepository.findByPassenger_passengerId(passengerId);
+//        for (Dependent dependent : dependents) {
+//            int dependentAge = calculateAge(dependent.getDateOfBirth());
+//            double dependentEuroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
+//            double dependentAdjustedEuroPremium = applyAgeBasedAdjustment(dependentEuroPremium, dependentAge);
+//
+//            //TODO: to be comment out
+//            // TEST: Override dependent premium to 0 for Africa_Asia (so total becomes 1 Birr)
+//            if (forceOneBirr) {
+//                dependentAdjustedEuroPremium = 0.0; // Set dependents to 0 to maintain total of 1 Birr
+//            }
+//
+//            totalPremiumInEuro += dependentAdjustedEuroPremium;
+//
+//            // Save premium for each dependent
+//            Premium dependentPremium = new Premium();
+//            dependentPremium.setPassenger(passenger);
+//            dependentPremium.setDependent(dependent);
+//            dependentPremium.setDestination(destination);
+//            dependentPremium.setStartDate(destination.getStartDate());
+//            dependentPremium.setEndDate(destination.getEndDate());
+//            dependentPremium.setPremiumAmount(dependentAdjustedEuroPremium);
+//            dependentPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
+//            premiumRepository.save(dependentPremium);
+//
+//            System.out.println("Dependent premium in Euro (" + dependent.getFirstName() + "): " + dependentAdjustedEuroPremium);
+//        }
+//
+//        double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
+//
+//        //TODO: to be comment out
+//        // TEST: Final override to ensure exactly 1 Birr for Africa_Asia
+//        if (forceOneBirr) {
+//            totalPremiumInBirr = 1.0;
+//        }
+//
+//        totalPremiumInBirr = Math.round(totalPremiumInBirr*100.0)/100.0;
+//        System.out.println("Total premium in Euro (main passenger + dependents): " + totalPremiumInEuro);
+//        System.out.println("Total premium in Birr (main passenger + dependents): " + totalPremiumInBirr);
+//
+//        return new PremiumResponse(totalPremiumInBirr, "Premium calculated and saved successfully.");
+//    }
 
-//        int duration = Period.between(startDate, endDate).getDays() + 1;
-        int duration = (int) (ChronoUnit.DAYS.between(destination.getStartDate(), destination.getEndDate()) + 1);
-        if (duration <= 0) throw new RuntimeException("Invalid duration");
 
-        double totalPremiumInEuro = 0.0;
-        double exchangeRate = exchangeRateService.getEuroToBirrRate();
+//TO BE COMMENT OUT
+public PremiumResponse calculateAndSavePremium(Long passengerId, Long destinationId) {
+    Passenger passenger = passengerRepository.findById(passengerId)
+            .orElseThrow(() -> new RuntimeException("Passenger not found"));
+    Destination destination = destinationRepository.findById(destinationId)
+            .orElseThrow(() -> new RuntimeException("Destination not found"));
 
-        // Calculate premium for the main passenger
-        double euroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
-        int passengerAge = calculateAge(passenger.getDateOfBirth());
-        double adjustedEuroPremium = applyAgeBasedAdjustment(euroPremium, passengerAge);
+    int duration = (int) (ChronoUnit.DAYS.between(destination.getStartDate(), destination.getEndDate()) + 1);
+    if (duration <= 0) throw new RuntimeException("Invalid duration");
 
-        totalPremiumInEuro += adjustedEuroPremium;
+    double totalPremiumInEuro = 0.0;
+    double exchangeRate = exchangeRateService.getEuroToBirrRate();
 
-        // Save premium for the main passenger
-        Premium passengerPremium = new Premium();
-        passengerPremium.setPassenger(passenger);
-        passengerPremium.setDestination(destination);
-        passengerPremium.setStartDate(destination.getStartDate());
-        passengerPremium.setEndDate(destination.getEndDate());
-        passengerPremium.setPremiumAmount(adjustedEuroPremium);
-        passengerPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
-        premiumRepository.save(passengerPremium);
+    //TODO: to be comment out
+    //TEST: If we should force 1 birr for Africa_Asia
+    String coverRequiredFor = destination.getCoverRequiredFor();
+    boolean forceOneBirr = "Africa_Asia".equals(coverRequiredFor);
 
-        System.out.println("Main passenger premium in Euro: " + adjustedEuroPremium);
+    // DEBUG: Print the actual value to see what's happening
+    System.out.println("DEBUG: coverRequiredFor = '" + coverRequiredFor + "'");
+    System.out.println("DEBUG: forceOneBirr = " + forceOneBirr);
 
-        // Fetch dependents and calculate their premiums
-        List<Dependent> dependents = dependentRepository.findByPassenger_passengerId(passengerId);
-        for (Dependent dependent : dependents) {
-            int dependentAge = calculateAge(dependent.getDateOfBirth());
-            double dependentEuroPremium = calculatePremiumInEuro(destination.getCoverRequiredFor(), duration);
-            double dependentAdjustedEuroPremium = applyAgeBasedAdjustment(dependentEuroPremium, dependentAge);
+    // Calculate premium for the main passenger
+    double euroPremium = calculatePremiumInEuro(coverRequiredFor, duration);
+    int passengerAge = calculateAge(passenger.getDateOfBirth());
+    double adjustedEuroPremium = applyAgeBasedAdjustment(euroPremium, passengerAge);
 
-            totalPremiumInEuro += dependentAdjustedEuroPremium;
+    //TODO: to be comment out
+    //Test: Override premium to equivalent of 1 birr for Africa_Asia
+    if (forceOneBirr){
+        adjustedEuroPremium = 1.00 / exchangeRate;
+        System.out.println("DEBUG: Overriding premium to 1 Birr equivalent in Euro: " + adjustedEuroPremium);
+    }
 
-            // Save premium for each dependent
-            Premium dependentPremium = new Premium();
-            dependentPremium.setPassenger(passenger);
-            dependentPremium.setDependent(dependent);
-            dependentPremium.setDestination(destination);
-            dependentPremium.setStartDate(destination.getStartDate());
-            dependentPremium.setEndDate(destination.getEndDate());
-            dependentPremium.setPremiumAmount(dependentAdjustedEuroPremium);
-            dependentPremium.setCoverLimit(getCoverLimit(destination.getCoverRequiredFor()));
-            premiumRepository.save(dependentPremium);
+    totalPremiumInEuro += adjustedEuroPremium;
 
-            System.out.println("Dependent premium in Euro (" + dependent.getFirstName() + "): " + dependentAdjustedEuroPremium);
+    // Save premium for the main passenger
+    Premium passengerPremium = new Premium();
+    passengerPremium.setPassenger(passenger);
+    passengerPremium.setDestination(destination);
+    passengerPremium.setStartDate(destination.getStartDate());
+    passengerPremium.setEndDate(destination.getEndDate());
+    passengerPremium.setPremiumAmount(adjustedEuroPremium);
+    passengerPremium.setCoverLimit(getCoverLimit(coverRequiredFor));
+    premiumRepository.save(passengerPremium);
+
+    System.out.println("Main passenger premium in Euro: " + adjustedEuroPremium);
+
+    // Fetch dependents and calculate their premiums
+    List<Dependent> dependents = dependentRepository.findByPassenger_passengerId(passengerId);
+    for (Dependent dependent : dependents) {
+        int dependentAge = calculateAge(dependent.getDateOfBirth());
+        double dependentEuroPremium = calculatePremiumInEuro(coverRequiredFor, duration);
+        double dependentAdjustedEuroPremium = applyAgeBasedAdjustment(dependentEuroPremium, dependentAge);
+
+        //TODO: to be comment out
+        // TEST: Override dependent premium to 0 for Africa_Asia (so total becomes 1 Birr)
+        if (forceOneBirr) {
+            dependentAdjustedEuroPremium = 0.0; // Set dependents to 0 to maintain total of 1 Birr
+            System.out.println("DEBUG: Setting dependent premium to 0");
         }
 
-        double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
+        totalPremiumInEuro += dependentAdjustedEuroPremium;
 
-        totalPremiumInBirr = Math.round(totalPremiumInBirr*100.0)/100.0;
-        System.out.println("Total premium in Euro (main passenger + dependents): " + totalPremiumInEuro);
-        System.out.println("Total premium in Birr (main passenger + dependents): " + totalPremiumInBirr);
+        // Save premium for each dependent
+        Premium dependentPremium = new Premium();
+        dependentPremium.setPassenger(passenger);
+        dependentPremium.setDependent(dependent);
+        dependentPremium.setDestination(destination);
+        dependentPremium.setStartDate(destination.getStartDate());
+        dependentPremium.setEndDate(destination.getEndDate());
+        dependentPremium.setPremiumAmount(dependentAdjustedEuroPremium);
+        dependentPremium.setCoverLimit(getCoverLimit(coverRequiredFor));
+        premiumRepository.save(dependentPremium);
 
-        return new PremiumResponse(totalPremiumInBirr, "Premium calculated and saved successfully.");
+        System.out.println("Dependent premium in Euro (" + dependent.getFirstName() + "): " + dependentAdjustedEuroPremium);
     }
+
+    double totalPremiumInBirr = totalPremiumInEuro * exchangeRate;
+
+    //TODO: to be comment out
+    // TEST: Final override to ensure exactly 1 Birr for Africa_Asia
+    if (forceOneBirr) {
+        totalPremiumInBirr = 1.0;
+        System.out.println("DEBUG: Final override - setting totalPremiumInBirr to 1.0");
+    }
+
+    totalPremiumInBirr = Math.round(totalPremiumInBirr*100.0)/100.0;
+    System.out.println("Total premium in Euro (main passenger + dependents): " + totalPremiumInEuro);
+    System.out.println("Total premium in Birr (main passenger + dependents): " + totalPremiumInBirr);
+
+    // TODO: ALSO SAVE TO INSURANCE PREMIUM ENTITY WITH 1 BIRR FOR AFRICA_ASIA
+    InsurancePremium insurancePremium = new InsurancePremium();
+    insurancePremium.setCoverRequiredFor(coverRequiredFor);
+    insurancePremium.setStartDate(destination.getStartDate());
+    insurancePremium.setEndDate(destination.getEndDate());
+    insurancePremium.setNumberOfTravelers(1 + dependents.size()); // main passenger + dependents
+    insurancePremium.setTripDuration(duration);
+    insurancePremium.setCoverLimit(getCoverLimit(coverRequiredFor).intValue());
+
+    // Set premium amount based on test condition
+    if (forceOneBirr) {
+        insurancePremium.setPremiumAmount(1.0); // 1 Birr for Africa_Asia
+        System.out.println("DEBUG: Setting InsurancePremium amount to 1.0");
+    } else {
+        insurancePremium.setPremiumAmount(totalPremiumInBirr); // Normal calculated amount
+        System.out.println("DEBUG: Setting InsurancePremium amount to calculated amount: " + totalPremiumInBirr);
+    }
+
+    insurancePremium.setReferenceCode(UUID.randomUUID().toString());
+    insurancePremium.setPaid(false);
+
+    // Save the insurance premium entity
+    insurancePremiumRepository.save(insurancePremium);
+
+    return new PremiumResponse(totalPremiumInBirr, "Premium calculated and saved successfully.");
+}
 
     private double applyAgeBasedAdjustment(double premium, int age) {
         if (age >= 65 && age <= 80) {
@@ -124,6 +262,7 @@ public class PremiumService {
         if (dateOfBirth == null) throw new RuntimeException("Passenger's date of birth is not set");
         return Period.between(dateOfBirth, LocalDate.now()).getYears();
     }
+
 
     private double calculatePremiumInEuro(String coverRequiredFor, int duration) {
         Map<String, Map<String, Double>> premiumRates = Map.ofEntries(
@@ -198,7 +337,7 @@ public class PremiumService {
 
     }
 
-    private double getCoverLimit(String coverRequiredFor) {
+    private Double getCoverLimit(String coverRequiredFor) {
         Map<String, Double> coverLimits = Map.ofEntries(
 
                 Map.entry("Africa_Asia", 15000.0),

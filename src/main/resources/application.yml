@@ -4,9 +4,9 @@ spring:
 
   datasource:
     driver-class-name: com.mysql.cj.jdbc.Driver
-    url: jdbc:mysql://localhost:3306/travelInsurance?autoReconnect=true&createDatabaseIfNotExist=true&useUnicode=yes&characterEncoding=UTF-8&useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true
-    username: root
-    password:
+    url: ${DB_URL:jdbc:mysql://localhost:3306/travelInsurance?autoReconnect=true&createDatabaseIfNotExist=true&useUnicode=yes&characterEncoding=UTF-8&useSSL=false&serverTimezone=UTC&useLegacyDatetimeCode=false&allowPublicKeyRetrieval=true}
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
 
   jpa:
     hibernate:
@@ -25,7 +25,7 @@ springdoc:
     enabled: true
 medcoanalytics:
   app:
-    jwtSecret: "aVZyeWVkT0tFQmlGVEl3QVBwWmJpTGhoNnpncWZjeWg="
+    jwtSecret: ${JWT_SECRET:abcdefghijKLMNOPQRSTUvwxyz=====provider====0123456987}
     jwtExpirationMs: 86400000
 
 logging:
@@ -34,7 +34,7 @@ logging:
     org.springframework.transaction: TRACE
 
 file:
-  dir-attachments: C:/Users/pc/Pictures/travelFile
+  dir-attachments: ${FILE_ATTACHMENTS_DIR:C:/Users/pc/Pictures/travelFile}
 
 servlet:
   multipart:
@@ -50,25 +50,28 @@ server:
 # MAPFRE API Configuration
 mapfre:
   api:
-    key: dev-mapfre-api-key
-    url: http://localhost:8900/mock/mapfre
+    key: ${MAPFRE_API_KEY:dev-mapfre-api-key}
+    url: ${MAPFRE_API_URL:http://localhost:8900/mock/mapfre}
 
 # chapa API Configuration
 chapa:
   api:
-    base-url: https://api.chapa.co/v1/transaction/initialize
-    key: CHASECK_TEST-n4BnVZS3FuFT6gVcqy3CN5rB2DhtGMzn
+    base-url: ${CHAPA_BASE_URL:https://api.chapa.co/v1/transaction/initialize}
+    key: ${CHAPA_API_KEY:}
+    callback-url: ${CHAPA_CALLBACK_URL:http://localhost:8900/api/travel/payments/callback}
+    return-url: ${CHAPA_RETURN_URL:http://localhost:5173/pdf}
+    verify-url: ${CHAPA_VERIFY_URL:https://api.chapa.co/v1/transaction/verify}
 
 afromessage:
   api:
-    url: "https://api.afromessage.com/api/send"
-    token: eyJhbGciOiJIUzI1NiJ9.eyJpZGVudGlmaWVyIjoiYkpUZ1VZVzJoaTZnaFo5QTJDSjBaU3pzeWhLZ2ZtVWsiLCJleHAiOjE4OTM0NzkxNjUsImlhdCI6MTczNTcxMjc2NSwianRpIjoiMmVlMGNmOWUtOGFlMC00NDQ0LWFjY2UtODdhNjU0MjhiNmQxIn0.D5_eQNtA4HNaNuVo1O6pydwaZ-sn3fpWZa-g4rjl1IU
-    identifierId: e80ad9d8-adf3-463f-80f4-7c4b39f7f164
+    url: ${AFROMESSAGE_API_URL:https://api.afromessage.com/api/send}
+    token: ${AFROMESSAGE_TOKEN:}
+    identifierId: ${AFROMESSAGE_IDENTIFIER_ID:}
 #    senderName:
 #    callbackUrl: http://192.168.100.82:8888/api/notifications/sms-status
 
 openai:
   api:
-    key: "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"
-    url: https://api.openai.com/v1/chat/completions
+    key: ${OPENAI_API_KEY:}
+    url: ${OPENAI_API_URL:https://api.openai.com/v1/chat/completions}
   model: gpt-3.5-turbo

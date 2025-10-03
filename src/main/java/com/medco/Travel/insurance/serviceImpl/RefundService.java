@@ -6,6 +6,10 @@ import com.medco.Travel.insurance.repository.PolicyRepository;
 import com.medco.Travel.insurance.repository.RefundRepository;
 import com.medco.Travel.insurance.shared.audit.enums.RefundStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
@@ -69,42 +73,56 @@ public class RefundService {
         return refundRepository.save(refund);
     }
 
-    public List<Refund> getRefunds(RefundStatus status, LocalDate startDate, LocalDate endDate, Long policyId) {
+    public Page<Refund> getRefunds(RefundStatus status, LocalDate startDate, LocalDate endDate, Long policyId,
+                                   int page, int size, String sortBy, String direction) {
+
+        Pageable pageable = createPageable(page, size, sortBy, direction);
+
         if (status != null) {
-            return getRefundsByStatus(status, startDate, endDate);
+            return getRefundsByStatus(status, startDate, endDate, pageable);
         }
 
         if (startDate != null || endDate != null) {
-            return getRefundsByDateRange(startDate, endDate);
+            return getRefundsByDateRange(startDate, endDate, pageable);
         }
 
         if (policyId != null) {
-            return refundRepository.findByPolicyId(policyId);
+            return refundRepository.findByPolicyId(policyId, pageable);
         }
 
-        return refundRepository.findAll();
+        return refundRepository.findAll(pageable);
     }
 
-    private List<Refund> getRefundsByDateRange(LocalDate startDate, LocalDate endDate) {
+    private Pageable createPageable(int page, int size, String sortBy, String direction) {
+        Sort sort = direction.equalsIgnoreCase("desc")
+                ? Sort.by(sortBy).descending()
+                : Sort.by(sortBy).ascending();
+        return PageRequest.of(page, size, sort);
+    }
+
+    private Page<Refund> getRefundsByDateRange(LocalDate startDate, LocalDate endDate, Pageable pageable) {
         if (startDate != null && endDate != null) {
-            return refundRepository.findByRequestDateBetween(startDate, endDate);
+            return refundRepository.findByRequestDateBetween(startDate, endDate, pageable);
         } else if (startDate != null) {
-            return refundRepository.findByRequestDateAfter(startDate);
-        }else {
-            return refundRepository.findByRequestDateBefore(endDate);
+            return refundRepository.findByRequestDateAfter(startDate, pageable);
+        } else if (endDate != null) {
+            return refundRepository.findByRequestDateBefore(endDate, pageable);
+        } else {
+            // Fallback - return all with pagination if no dates provided
+            return refundRepository.findAll(pageable);
         }
     }
 
-    private List<Refund> getRefundsByStatus(RefundStatus status, LocalDate startDate, LocalDate endDate) {
-      if (startDate != null && endDate != null) {
-          return refundRepository.findByStatusAndRequestDateBetween(status, startDate, endDate);
-      } else if (startDate != null) {
-          return refundRepository.findByStatusAndRequestDateAfter(status, startDate);
-      }else if (endDate != null) {
-          return refundRepository.findByStatusAndRequestDateBefore(status, endDate);
-      }else {
-          return refundRepository.findByStatus(status);
-      }
+    private Page<Refund> getRefundsByStatus(RefundStatus status, LocalDate startDate, LocalDate endDate, Pageable pageable) {
+        if (startDate != null && endDate != null) {
+            return refundRepository.findByStatusAndRequestDateBetween(status, startDate, endDate, pageable);
+        } else if (startDate != null) {
+            return refundRepository.findByStatusAndRequestDateAfter(status, startDate, pageable);
+        } else if (endDate != null) {
+            return refundRepository.findByStatusAndRequestDateBefore(status, endDate, pageable);
+        } else {
+            return refundRepository.findByStatus(status, pageable);
+        }
     }
 
 }

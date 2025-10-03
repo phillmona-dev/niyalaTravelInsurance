@@ -5,6 +5,7 @@ import com.medco.Travel.insurance.dto.Response.ChapaPaymentResponse;
 import com.medco.Travel.insurance.entity.InsurancePremium;
 import com.medco.Travel.insurance.repository.InsurancePremiumRepository;
 import com.medco.Travel.insurance.serviceImpl.ChapaPaymentService;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -12,6 +13,7 @@ import org.springframework.web.servlet.view.RedirectView;
 
 import java.io.IOException;
 import java.util.Map;
+import java.util.Optional;
 
 @RestController
 @RequestMapping("/api/travel/payments")
@@ -19,6 +21,12 @@ public class PaymentController {
 
     private final ChapaPaymentService paymentService;
     private final InsurancePremiumRepository insurancePremiumRepository;
+
+    @Value("${chapa.api.callback-url}")
+    private String callbackUrl;
+
+    @Value("${chapa.api.return-url}")
+    private String returnUrl;
 
     public PaymentController(ChapaPaymentService paymentService, InsurancePremiumRepository insurancePremiumRepository) {
 
@@ -33,8 +41,8 @@ public class PaymentController {
                 .orElseThrow(() -> new RuntimeException("No unpaid premium found for reference code: " + referenceCode));
 
         ChapaPaymentRequest paymentRequest = paymentService.createPaymentRequest(premium);
-        paymentRequest.setCallbackUrl("http://192.168.100.82:8900/api/payments/callback");
-        paymentRequest.setReturnUrl("http://192.168.100.82:8900/api/payments/payment-success");
+        paymentRequest.setCallbackUrl(callbackUrl);
+        paymentRequest.setReturnUrl(returnUrl);
         paymentRequest.setTxRef(referenceCode);
 
         ChapaPaymentResponse response = paymentService.initiatePayment(paymentRequest);
@@ -43,10 +51,15 @@ public class PaymentController {
 
 
     @PostMapping("/callback")
-    public ResponseEntity<String> handleCallback(@RequestBody String callbackData) throws IOException {
-        // Parse the callbackData if needed and verify the transaction
-        // Extract txRef from the callbackData
-        String txRef = "extracted-tx-ref"; // Replace with actual logic to extract txRef
+    public ResponseEntity<String> handleCallback(@RequestBody Map<String, Object> callbackData) throws IOException {
+        // Expecting tx_ref or txRef from gateway callback
+        String txRef = Optional.ofNullable((String) callbackData.get("tx_ref"))
+                .orElse((String) callbackData.get("txRef"));
+
+        if (txRef == null || txRef.isEmpty()) {
+            return ResponseEntity.badRequest().body("Missing tx_ref in callback payload");
+        }
+
         boolean isVerified = paymentService.verifyTransaction(txRef);
         return ResponseEntity.ok(isVerified ? "Payment verified" : "Payment verification failed");
     }

@@ -43,8 +43,18 @@ public class JwtUtils {
     }
 
     private Key key() {
+        // Use the secret key directly as bytes (UTF-8 encoded)
+        // If the secret is less than 256 bits (32 bytes), pad it
+        byte[] keyBytes = jwtSecret.getBytes(java.nio.charset.StandardCharsets.UTF_8);
 
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+        // Ensure the key is at least 256 bits (32 bytes) for HS256
+        if (keyBytes.length < 32) {
+            byte[] paddedKey = new byte[32];
+            System.arraycopy(keyBytes, 0, paddedKey, 0, keyBytes.length);
+            keyBytes = paddedKey;
+        }
+
+        return Keys.hmacShaKeyFor(keyBytes);
     }
 
     public String getUserNameFromJwtToken(String token) {

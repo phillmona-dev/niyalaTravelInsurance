@@ -40,7 +40,6 @@ public class UserDetailsImpl implements UserDetails {
     //    private String insuranceUuid;
 //    private String agencyUuid;
 //    private String profilePicture;
-    private int branchId;
 
     private Collection<? extends GrantedAuthority> authorities;
 
@@ -225,14 +224,6 @@ public class UserDetailsImpl implements UserDetails {
 
     public void setUserType(UserType userType) {
         this.userType = userType;
-    }
-
-    public int getBranchId() {
-        return branchId;
-    }
-
-    public void setBranchId(int branchId) {
-        this.branchId = branchId;
     }
 
     public void setAuthorities(Collection<? extends GrantedAuthority> authorities) {

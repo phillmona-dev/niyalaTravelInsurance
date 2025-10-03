@@ -41,7 +41,7 @@ public class RoleController {
     }
 
     @GetMapping("/all")
-//    @PreAuthorize("hasAuthority('ROLE_READ_PATIENT')")
+    //    @PreAuthorize("hasAuthority('ROLE_READ_PATIENT')")
     public RoleMyResponse getRoles(@RequestParam(value = "page", defaultValue = "1") int page,
                                    @RequestParam(value = "limit", defaultValue = "25") int limit){
         return roleService.getRoles(page, limit);

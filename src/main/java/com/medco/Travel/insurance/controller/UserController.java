@@ -103,7 +103,7 @@ public class UserController {
     }
 
     @GetMapping(path = "/search")
-//    @PreAuthorize("hasRole('Read-Users')")
+    //    @PreAuthorize("hasRole('Read-Users')")
     public List<UserResponse> searchUsers(@RequestParam("search") String searchKey, @RequestParam(value="page", defaultValue = "1") int page,
                                           @RequestParam(value="limit", defaultValue = "25") int limit){
         return userService.searchUsers(searchKey,page,limit);
@@ -111,7 +111,7 @@ public class UserController {
     }
 
     @PostMapping(path = "/uploadprofile")
-//    @PreAuthorize("hasRole('Change-User-Profile')")
+    //    @PreAuthorize("hasRole('Change-User-Profile')")
     public ResponseEntity<?> uploadProfilePicture(@ModelAttribute UploadProfileRequest requestDetail)
             throws java.io.IOException {
         return userService.uploadProfilePicture(requestDetail);
@@ -162,7 +162,7 @@ public class UserController {
     }
 
     @DeleteMapping(path = "/{userUuid}")
-//    @PreAuthorize("hasRole('Delete-User')")
+    //    @PreAuthorize("hasRole('Delete-User')")
     @Operation(summary = "Delete System User", security = @SecurityRequirement(name = "bearerAuth"))
     public ResponseEntity<?> deleteUser(@PathVariable String userUuid) {
         return userService.deleteUser(userUuid);

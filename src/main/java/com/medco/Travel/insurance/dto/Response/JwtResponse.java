@@ -111,14 +111,6 @@ public class JwtResponse {
         this.userType = userType;
     }
 
-    public int getBranchId() {
-        return branchId;
-    }
-
-    public void setBranchId(int branchId) {
-        this.branchId = branchId;
-    }
-
     public List<String> getPrivileges() {
         return privileges;
     }
@@ -144,13 +136,12 @@ public class JwtResponse {
     //    private String insuranceUuid;
 //    private String agencyUuid;
 //    private String profilePicture;
-    private int branchId;
     private List<String> privileges;
 
     public JwtResponse(String accessToken, String userUuid, String email, String roleUuid,
                        String firstName, String fatherName, String grandFatherName, String gender, String title,String telePhone,
                        UserStatus userStatus, UserType userType,
-                       int branchId, List<String> privileges) {
+                       List<String> privileges) {
         this.token = accessToken;
         this.userUuid = userUuid;
         this.email = email;
@@ -167,7 +158,6 @@ public class JwtResponse {
 //        this.insuranceUuid = insuranceUuid;
 //        this.agencyUuid = agencyUuid;
 //        this.profilePicture = profilePicture;
-        this.branchId = branchId;
         this.privileges = privileges;
     }
 }

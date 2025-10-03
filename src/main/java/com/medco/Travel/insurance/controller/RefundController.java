@@ -4,11 +4,12 @@ import com.medco.Travel.insurance.entity.Refund;
 import com.medco.Travel.insurance.serviceImpl.RefundService;
 import com.medco.Travel.insurance.shared.audit.enums.RefundStatus;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
-import java.util.List;
 
 @RestController
 @RequestMapping("/api/travel/refunds")
@@ -40,13 +41,17 @@ public class RefundController {
     }
 
     @GetMapping("/search")
-    public ResponseEntity<List<Refund>> searchRefund(
+    public ResponseEntity<Page<Refund>> searchRefund(
             @RequestParam(required = false) RefundStatus status,
-            @RequestParam(required = false) LocalDate startDate,
-            @RequestParam(required = false) LocalDate endDate,
-            @RequestParam(required = false) Long policyId) {
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate,
+            @RequestParam(required = false) Long policyId,
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "20") int size,
+            @RequestParam(defaultValue = "refundId") String sortBy,
+            @RequestParam(defaultValue = "desc") String direction) {
 
-        List<Refund> refunds = refundService.getRefunds(status, startDate, endDate, policyId);
+        Page<Refund> refunds = refundService.getRefunds(status, startDate, endDate, policyId, page, size, sortBy, direction);
         return ResponseEntity.ok(refunds);
     }
 }

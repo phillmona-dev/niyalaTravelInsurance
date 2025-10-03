@@ -131,25 +131,32 @@ public class UserServiceImpl implements UserService {
     @Override
     public ResponseEntity<?> authenticateUser(LoginRequest loginRequest) {
         try {
+            System.out.println("DEBUG: Starting authentication for email: " + loginRequest.getEmail());
 
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(loginRequest.getEmail(), loginRequest.getPassword()));
 
+            System.out.println("DEBUG: Authentication successful");
             SecurityContextHolder.getContext().setAuthentication(authentication);
             UserDetailsImpl userDetails = (UserDetailsImpl) authentication.getPrincipal();
+
+            System.out.println("DEBUG: UserDetails retrieved, status: " + userDetails.getUserStatus());
 
             if (!userDetails.getUserStatus().equals(UserStatus.ACTIVE)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
                         .body("Your account is not active. Please contact support.");
             }
 
+            System.out.println("DEBUG: Generating JWT token");
             String jwt = jwtUtils.generateJwtToken(authentication);
+            System.out.println("DEBUG: JWT token generated successfully");
 
             List<String> roles = userDetails.getAuthorities().stream()
                     .map(GrantedAuthority::getAuthority)
                     .collect(Collectors.toList());
 
-            return ResponseEntity.ok(new JwtResponse(
+            System.out.println("DEBUG: Creating JwtResponse");
+            JwtResponse response = new JwtResponse(
                     jwt,
                     userDetails.getUserUuid(),
                     userDetails.getEmail(),
@@ -166,17 +173,21 @@ public class UserServiceImpl implements UserService {
 //					userDetails.getInsuranceUuid(),
 //					userDetails.getAgencyUuid(),
 //					userDetails.getProfilePicture(),
-                    userDetails.getBranchId(),
                     roles
-            ));
+            );
+            System.out.println("DEBUG: JwtResponse created successfully");
+            return ResponseEntity.ok(response);
         } catch (AuthenticationException e) {
+            System.out.println("DEBUG: Authentication failed: " + e.getMessage());
             if (e instanceof BadCredentialsException) {
                 throw new InvalidCredentialsException("Invalid UserName Or Password Provided!");
             } else {
                 throw new InvalidCredentialsException("No User Account Found With the Provided Credentials!");
             }
         } catch (Exception e) {
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            System.out.println("DEBUG: Unexpected error during authentication: " + e.getMessage());
+            e.printStackTrace();
+            throw new RuntimeException("Authentication failed: " + e.getMessage(), e);
         }
     }
 

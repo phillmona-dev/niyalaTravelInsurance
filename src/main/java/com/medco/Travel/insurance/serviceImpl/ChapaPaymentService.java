@@ -30,6 +30,15 @@ public class ChapaPaymentService {
     @Value("${chapa.api.key}")
     private String apiKey;
 
+    @Value("${chapa.api.callback-url}")
+    private String callbackUrl;
+
+    @Value("${chapa.api.return-url}")
+    private String returnUrl;
+
+    @Value("${chapa.api.verify-url}")
+    private String verifyUrl;
+
     private final OkHttpClient client;
 
     private final PaymentTransactionRepository paymentTransactionRepository;
@@ -121,7 +130,7 @@ public class ChapaPaymentService {
 
     public boolean verifyTransaction(String txRef) throws IOException {
         Request request = new Request.Builder()
-                .url(baseUrl + "/v1/transaction/verify/" + txRef)
+                .url(verifyUrl + "/" + txRef)
                 .get()
                 .addHeader("Authorization", "Bearer " + apiKey)
                 .build();
@@ -168,8 +177,8 @@ public class ChapaPaymentService {
                 .lastName(passenger.getLastName())
                 .phoneNumber(passenger.getTelephone())
                 .txRef("tx-" + premium.getReferenceCode() + "-" + System.currentTimeMillis())  // Unique transaction reference
-                .callbackUrl("http://192.168.100.82:8900/api/payments/callback")
-                .returnUrl("http://192.168.100.82:8900/api/payments/payment-success")
+                .callbackUrl(callbackUrl)
+                .returnUrl(returnUrl)
                 .title("Insurance Payment")
                 .description("Payment for Travel Insurance Premium")
                 .hideReceipt(false)
