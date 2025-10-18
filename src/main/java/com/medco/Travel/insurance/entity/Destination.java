@@ -1,5 +1,6 @@
 package com.medco.Travel.insurance.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -32,6 +33,7 @@ public class Destination {
 //    private String chronicIllness;
 
     @OneToMany(mappedBy = "destination", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JsonIgnore
     private List<Policy> policies = new ArrayList<>();
 
 }

@@ -85,7 +85,12 @@ public class PassengerServiceImpl implements PassengerService {
         Passenger savedPassenger = passengerRepository.save(passenger);
 
         // Update the premium with the registered passenger
-        premium.setPassenger(savedPassenger);
+        // Since InsurancePremium has a one-to-many relationship with Passenger,
+        // we need to add the passenger to the list
+        if (premium.getPassengers() == null) {
+            premium.setPassengers(new java.util.ArrayList<>());
+        }
+        premium.getPassengers().add(savedPassenger);
         insurancePremiumRepository.save(premium); // Ensure passenger is linked in premium
 
         // Return response with required fields

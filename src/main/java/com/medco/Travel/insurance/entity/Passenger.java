@@ -37,6 +37,7 @@ public class Passenger {
     private String chronicIllness;
     @ManyToOne
     @JoinColumn(name = "policy_policyId")
+    @JsonIgnore
     private Policy policy;
 
     @ManyToOne
@@ -44,12 +45,10 @@ public class Passenger {
     private Destination destination;
 
     @OneToMany(mappedBy = "passenger", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
-    @JsonIgnore
     private List<Dependent> dependents;
 
-
-    @OneToOne
-    @JoinColumn(name = "premium_id", nullable = false)
+    @ManyToOne
+    @JoinColumn(name = "insurance_premium_id")
     private InsurancePremium insurancePremium;
 //    @ManyToOne
 //    @JoinColumn(name = "user_id", nullable = false)

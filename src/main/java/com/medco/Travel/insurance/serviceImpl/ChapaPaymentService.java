@@ -166,8 +166,12 @@ public class ChapaPaymentService {
     }
 
     public ChapaPaymentRequest createPaymentRequest(InsurancePremium premium) {
-        // Retrieve the passenger associated with the premium
-        Passenger passenger = premium.getPassenger();
+        // Retrieve the first passenger associated with the premium (main passenger)
+        if (premium.getPassengers() == null || premium.getPassengers().isEmpty()) {
+            throw new RuntimeException("No passenger found for the insurance premium");
+        }
+
+        Passenger passenger = premium.getPassengers().get(0); // Get the first/main passenger
 
         return ChapaPaymentRequest.builder()
                 .amount(premium.getPremiumAmount())
@@ -178,7 +182,7 @@ public class ChapaPaymentService {
                 .phoneNumber(passenger.getTelephone())
                 .txRef("tx-" + premium.getReferenceCode() + "-" + System.currentTimeMillis())  // Unique transaction reference
                 .callbackUrl(callbackUrl)
-                .returnUrl(returnUrl)
+//                .returnUrl(returnUrl)
                 .title("Insurance Payment")
                 .description("Payment for Travel Insurance Premium")
                 .hideReceipt(false)

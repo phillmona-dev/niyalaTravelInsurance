@@ -1,5 +1,6 @@
 package com.medco.Travel.insurance.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -25,5 +26,6 @@ public class Dependent {
 
     @ManyToOne
     @JoinColumn(name = "passenger_id", nullable = false)
+    @JsonIgnore
     private Passenger passenger;
 }

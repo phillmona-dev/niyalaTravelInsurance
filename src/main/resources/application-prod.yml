@@ -19,3 +19,30 @@ logging:
 
 server:
   port: ${SERVER_PORT:8900}
+
+# Add these to your prod configuration
+medcoanalytics:
+  app:
+    jwtSecret: ${JWT_SECRET}
+    jwtExpirationMs: 86400000
+
+# Add other production-specific configs
+mapfre:
+  api:
+    key: ${MAPFRE_API_KEY}
+    url: ${MAPFRE_API_URL}
+
+chapa:
+  api:
+    key: ${CHAPA_API_KEY}
+    base-url: ${CHAPA_BASE_URL}
+    callback-url: ${CHAPA_CALLBACK_URL}
+
+afromessage:
+  api:
+    token: ${AFROMESSAGE_TOKEN}
+    identifierId: ${AFROMESSAGE_IDENTIFIER_ID}
+
+openai:
+  api:
+    key: ${OPENAI_API_KEY}

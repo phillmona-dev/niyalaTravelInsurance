@@ -20,3 +20,8 @@ logging:
 
 server:
   port: ${SERVER_PORT:8900}
+
+# Add development-specific JWT secret
+medcoanalytics:
+  app:
+    jwtSecret: ${JWT_SECRET:abcdefghijKLMNOPQRSTUvwxyz=====provider====0123456987}  # Safe for development

@@ -25,8 +25,9 @@ public class PolicyService {
 
     @Autowired
     private PassengerRepository passengerRepository;
+
     @Autowired
-    private PremiumRepository premiumRepository;
+    private InsurancePremiumRepository insurancePremiumRepository;
 
     public Policy createPolicy(Long passengerId, Long destinationId, LocalDate startDate, LocalDate endDate) {
 
@@ -36,9 +37,11 @@ public class PolicyService {
         Destination destination = destinationRepository.findById(destinationId)
                 .orElseThrow(() -> new RuntimeException("Destination not found"));
 
-        // Fetch the first available premium and unwrap the Optional
-        Premium premium = (Premium) premiumRepository.findFirstByPassenger_passengerIdAndDestination_destinationId(passengerId, destinationId)
-                .orElseThrow(() -> new RuntimeException("Premium not found for the given passenger and destination"));
+        // Fetch the insurance premium for the passenger
+        InsurancePremium insurancePremium = passenger.getInsurancePremium();
+        if (insurancePremium == null) {
+            throw new RuntimeException("Insurance premium not found for the given passenger");
+        }
 
         int duration = Period.between(startDate, endDate).getDays();
         if (duration <= 0) {
@@ -50,13 +53,24 @@ public class PolicyService {
         policy.setPolicyNumber(generatePolicyNumber());
         policy.setStartDate(startDate);
         policy.setEndDate(endDate);
-        policy.setPremiumAmount(premium.getPremiumAmount());
+        policy.setPremiumAmount(insurancePremium.getPremiumAmount());
         policy.setDestination(destination);
+        policy.setInsurancePremium(insurancePremium);
 
-        // Associate the passenger with the policy
-        policy.setPassengers(Collections.singletonList(passenger));
+        // Set payment status from InsurancePremium
+        policy.setPaymentStatus(insurancePremium.isPaid() ? "PAID" : "UNPAID");
 
-        return policyRepository.save(policy);
+        // Save the policy first to get the ID
+        Policy savedPolicy = policyRepository.save(policy);
+
+        // Associate the passenger with the policy (bidirectional relationship)
+        passenger.setPolicy(savedPolicy);
+        passengerRepository.save(passenger);
+
+        // Set the passengers list on the policy
+        savedPolicy.setPassengers(Collections.singletonList(passenger));
+
+        return savedPolicy;
     }
 
     private String generatePolicyNumber() {

@@ -42,7 +42,7 @@ public class PaymentController {
 
         ChapaPaymentRequest paymentRequest = paymentService.createPaymentRequest(premium);
         paymentRequest.setCallbackUrl(callbackUrl);
-        paymentRequest.setReturnUrl(returnUrl);
+//        paymentRequest.setReturnUrl(returnUrl);
         paymentRequest.setTxRef(referenceCode);
 
         ChapaPaymentResponse response = paymentService.initiatePayment(paymentRequest);

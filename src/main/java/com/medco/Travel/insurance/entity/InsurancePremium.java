@@ -1,5 +1,6 @@
 package com.medco.Travel.insurance.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -7,11 +8,15 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 import java.time.LocalDate;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 @Entity
 @Getter
 @Setter
+@NoArgsConstructor
+@AllArgsConstructor
 public class InsurancePremium {
 
     @Id
@@ -34,13 +39,33 @@ public class InsurancePremium {
     private String referenceCode;
 
     private boolean isPaid = false;
+
     private int tripDuration;
 
-    @OneToOne(mappedBy = "insurancePremium", cascade = CascadeType.ALL)
-    private Passenger passenger;
+    // Relationships from Premium entity
+    @OneToMany(mappedBy = "insurancePremium", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Passenger> passengers = new ArrayList<>();
 
-    public InsurancePremium() {
-        this.referenceCode = UUID.randomUUID().toString(); // Generate a unique reference code at creation
+    @ManyToOne
+    @JoinColumn(name = "destination_id")
+    private Destination destination;
+
+    @ManyToOne
+    @JoinColumn(name = "dependent_id")
+    @JsonIgnore
+    private Dependent dependent;
+
+    // One-to-many relationship with policies (one premium can be associated with multiple policies)
+    @OneToMany(mappedBy = "insurancePremium", cascade = CascadeType.ALL)
+    @JsonIgnore
+    private List<Policy> policies = new ArrayList<>();
+
+    @PrePersist
+    public void generateReferenceCode() {
+        if (this.referenceCode == null || this.referenceCode.isEmpty()) {
+            this.referenceCode = UUID.randomUUID().toString();
+        }
     }
 }
 

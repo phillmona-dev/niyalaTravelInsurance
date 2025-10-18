@@ -23,9 +23,10 @@ springdoc:
   swagger-ui:
     path: /swagger-ui.html
     enabled: true
+
 medcoanalytics:
   app:
-    jwtSecret: ${JWT_SECRET:abcdefghijKLMNOPQRSTUvwxyz=====provider====0123456987}
+    jwtSecret: ${JWT_SECRET:}  # CHANGED: Remove the hardcoded default
     jwtExpirationMs: 86400000
 
 logging:
@@ -57,9 +58,9 @@ mapfre:
 chapa:
   api:
     base-url: ${CHAPA_BASE_URL:https://api.chapa.co/v1/transaction/initialize}
-    key: ${CHAPA_API_KEY:}
+    key: ${CHAPA_API_KEY:CHASECK-4AstboTKyoYh3N5bsCAoA04Q4TpaQCyi}
     callback-url: ${CHAPA_CALLBACK_URL:http://localhost:8900/api/travel/payments/callback}
-    return-url: ${CHAPA_RETURN_URL:http://localhost:5173/pdf}
+    return-url: ${CHAPA_RETURN_URL:http://198.168.0.152:5173/POLICY}
     verify-url: ${CHAPA_VERIFY_URL:https://api.chapa.co/v1/transaction/verify}
 
 afromessage:
@@ -67,8 +68,6 @@ afromessage:
     url: ${AFROMESSAGE_API_URL:https://api.afromessage.com/api/send}
     token: ${AFROMESSAGE_TOKEN:}
     identifierId: ${AFROMESSAGE_IDENTIFIER_ID:}
-#    senderName:
-#    callbackUrl: http://192.168.100.82:8888/api/notifications/sms-status
 
 openai:
   api:
